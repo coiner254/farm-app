@@ -736,7 +736,7 @@ var SUPA_URL = 'https://wcfyzytnsexzbmhusuvj.supabase.co';
 var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjZnl6eXRuc2V4emJtaHVzdXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MzQ2OTIsImV4cCI6MjA5NTIxMDY5Mn0.APqLSm1FqQfnT4jupAUlV39la1fYIpLaTdos3NJJw4k';
 var CONFIGURED = true; // credentials hard-coded
 
-var DB, SET, detChart=null, dshChart=null, curTag=null, moveLog=[];
+var DB={animals:[],staff:[],health:[],inventory:[],feedProgram:null}, SET={}, detChart=null, dshChart=null, curTag=null, moveLog=[];
 var DB_LOADED = false;
 var SYNC_QUEUE = [];
 
@@ -828,7 +828,8 @@ async function loadFromCloud(){
 
     if(!animalsR){ showBanner('bad','Database connection failed. Check your URL and key.'); return false; }
 
-    // Assemble DB
+    // Assemble DB — ensure DB object exists
+    if(!DB) DB={animals:[],staff:[],health:[],inventory:[],feedProgram:null};
     var weightsByTag = {};
     (weightsR||[]).forEach(function(w){
       if(!weightsByTag[w.tag]) weightsByTag[w.tag] = [];
