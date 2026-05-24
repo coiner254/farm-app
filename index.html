@@ -240,6 +240,32 @@ tr:hover td{background:var(--gray50);}
   </div>
 </div>
 
+<!-- FIRST-TIME SETUP SCREEN -->
+<div id="setup-screen" style="display:none;position:fixed;inset:0;background:#f4f6f2;z-index:1001;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
+  <div style="width:100%;max-width:400px;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:40px;margin-bottom:8px;">🌿</div>
+      <div style="font-size:22px;font-weight:700;color:#2d7024;">Feedlot Manager</div>
+      <div style="font-size:13px;color:#6b7280;margin-top:6px;">Connect to your Supabase database to get started</div>
+    </div>
+    <div style="background:#fff;border-radius:20px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,.10);">
+      <div id="setup-error" style="display:none;background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;padding:9px 12px;border-radius:8px;font-size:12px;margin-bottom:12px;"></div>
+      <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:10px 12px;font-size:12px;color:#1e40af;margin-bottom:16px;">
+        Find your credentials in Supabase → Settings → API
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px;font-weight:500;color:#6b7280;display:block;margin-bottom:4px;">Supabase Project URL</label>
+        <input type="url" id="setup-url" placeholder="https://xxxxxxxxxxxx.supabase.co" style="width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:13px;font-family:inherit;" autocomplete="off">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11px;font-weight:500;color:#6b7280;display:block;margin-bottom:4px;">Anon / Public Key</label>
+        <input type="password" id="setup-key" placeholder="eyJhbGci…" style="width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:13px;font-family:inherit;" autocomplete="off">
+      </div>
+      <button onclick="saveSetupConfig()" id="setup-btn" style="width:100%;padding:12px;background:#2d7024;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Connect &amp; continue</button>
+    </div>
+  </div>
+</div>
+
 <!-- OFFLINE / SYNC BADGE -->
 <div id="offline-badge" style="display:none;position:fixed;bottom:70px;right:12px;background:#374151;color:#fff;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:500;z-index:98;cursor:pointer;" onclick="flushSyncQueue()" title="Tap to sync"></div>
 
@@ -2355,7 +2381,13 @@ async function doLogin(){
   var btn   = document.getElementById('login-btn');
   errEl.style.display='none';
   if(!email||!pass){showLoginError('Enter your email and password.');return;}
-  btn.textContent='Signing in…'; btn.disabled=true;
+  // Guard: Supabase must be configured before login attempt
+  if(!CONFIGURED||SUPA_URL==='YOUR_SUPABASE_URL'){
+    showLoginError('Database not configured. Please contact your admin or re-open the app.');
+    return;
+  }
+  btn.innerHTML='<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;"></span>Signing in…';
+  btn.disabled=true;
   try{
     var res = await fetch(SUPA_URL+'/auth/v1/token?grant_type=password',{
       method:'POST',
@@ -2363,15 +2395,52 @@ async function doLogin(){
       body:JSON.stringify({email:email,password:pass})
     });
     var data = await res.json();
-    if(!res.ok||!data.access_token){showLoginError(data.error_description||data.msg||'Invalid email or password.');btn.textContent='Sign in';btn.disabled=false;return;}
-    // Store token and load user profile
+    if(!res.ok||!data.access_token){
+      var msg = data.error_description||data.msg||data.error||'Invalid email or password.';
+      showLoginError(msg);
+      btn.textContent='Sign in'; btn.disabled=false; return;
+    }
     localStorage.setItem('ffm_token', data.access_token);
     localStorage.setItem('ffm_refresh', data.refresh_token||'');
-    SUPA_KEY_AUTH = data.access_token; // use JWT for subsequent requests
+    SUPA_KEY_AUTH = data.access_token;
     await loadUserProfile(data.user.id, data.access_token);
     hideLoginScreen();
     btn.textContent='Sign in'; btn.disabled=false;
-  }catch(e){showLoginError('Connection error. Check internet.');btn.textContent='Sign in';btn.disabled=false;}
+  }catch(e){
+    console.error('Login error:',e);
+    showLoginError('Cannot reach database. Check your internet connection and try again.');
+    btn.textContent='Sign in'; btn.disabled=false;
+  }
+}
+
+// ── FIRST-TIME SETUP ────────────────────────────────────────────────────────
+async function saveSetupConfig(){
+  var url=(document.getElementById('setup-url').value||'').trim();
+  var key=(document.getElementById('setup-key').value||'').trim();
+  var errEl=document.getElementById('setup-error');
+  var btn=document.getElementById('setup-btn');
+  errEl.style.display='none';
+  if(!url||!key){errEl.textContent='Enter both the Project URL and Anon Key.';errEl.style.display='block';return;}
+  if(!url.startsWith('https://')){errEl.textContent='URL must start with https://';errEl.style.display='block';return;}
+  btn.textContent='Testing connection…'; btn.disabled=true;
+  // Test connection
+  try{
+    var test=await fetch(url+'/rest/v1/farm_settings?select=id&limit=1',{
+      headers:{'apikey':key,'Authorization':'Bearer '+key}
+    });
+    if(!test.ok){throw new Error('HTTP '+test.status);}
+    // Connection good — save and proceed
+    SUPA_URL=url; SUPA_KEY=key; CONFIGURED=true;
+    localStorage.setItem('supa_url',url);
+    localStorage.setItem('supa_key',key);
+    document.getElementById('setup-screen').style.display='none';
+    btn.textContent='Connect & continue'; btn.disabled=false;
+    showLoginScreen();
+  }catch(e){
+    errEl.textContent='Connection failed: '+e.message+'. Check the URL and key.';
+    errEl.style.display='block';
+    btn.textContent='Connect & continue'; btn.disabled=false;
+  }
 }
 
 var SUPA_KEY_AUTH = null; // JWT token when logged in
@@ -2426,9 +2495,10 @@ function showLoginError(msg){
 }
 
 function showLoginScreen(){
+  var setup = document.getElementById('setup-screen');
+  if(setup) setup.style.display='none';
   var ls = document.getElementById('login-screen');
   if(ls){ ls.style.display='flex'; }
-  // Pre-fill farm name on login screen
   var fn = document.getElementById('login-farm-name');
   if(fn&&SET&&SET.name) fn.textContent=SET.name;
 }
@@ -2991,17 +3061,17 @@ function phase4Init(){
 }
 
 window.addEventListener('DOMContentLoaded', function(){
-  // After main init, run phase4 setup then check auth
   setTimeout(async function(){
     phase4Init();
     if(!CONFIGURED){
-      // No Supabase — just run the app in offline mode
-      applyRoleUI(); return;
+      // Show first-time setup screen
+      document.getElementById('setup-screen').style.display='flex';
+      return;
     }
     var loggedIn = await checkAuthState();
     if(!loggedIn){ showLoginScreen(); }
     else { applyRoleUI(); updateAccountCard(); }
-  }, 100);
+  }, 150);
 });
 
 </script>
