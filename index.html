@@ -2339,9 +2339,10 @@ function init(){
 // AUTH STATE
 var CURRENT_USER = null; // {id, email, role, name, assigned_lots}
 var ROLE_PERMS = {
-  manager:  {dash:1,animals:1,lots:1,health:1,feed:1,inv:1,rep:1,more:1},
-  attendant:{dash:1,animals:1,lots:1,health:1,feed:1,inv:0,rep:0,more:0},
-  vet:      {dash:1,animals:1,lots:0,health:1,feed:0,inv:0,rep:0,more:0}
+  admin:    {dash:1,animals:1,lots:1,health:1,feed:1,inv:1,rep:1,more:1,users:1},
+  manager:  {dash:1,animals:1,lots:1,health:1,feed:1,inv:1,rep:1,more:1,users:0},
+  attendant:{dash:1,animals:1,lots:1,health:1,feed:1,inv:0,rep:0,more:0,users:0},
+  vet:      {dash:1,animals:1,lots:0,health:1,feed:0,inv:0,rep:0,more:0,users:0}
 };
 
 // ============================================================
@@ -2399,14 +2400,24 @@ function applyRoleUI(){
   if(!CURRENT_USER) return;
   var role = CURRENT_USER.role||'attendant';
   var perms = ROLE_PERMS[role]||ROLE_PERMS.attendant;
-  // Show/hide nav items based on role
+  // Show/hide nav items
   document.querySelectorAll('.ni[data-p]').forEach(function(btn){
     var pane = btn.getAttribute('data-p');
     btn.style.display = perms[pane] ? '' : 'none';
   });
-  // Update topbar with user name
+  // Update topbar
   var sub = document.getElementById('tb-sub');
-  if(sub) sub.textContent = CURRENT_USER.name + ' · ' + CURRENT_USER.role;
+  var roleLabel = role.charAt(0).toUpperCase()+role.slice(1);
+  if(sub) sub.textContent = (CURRENT_USER.name||CURRENT_USER.email) + ' · ' + roleLabel;
+  // Show/hide admin-only UI elements
+  document.querySelectorAll('.admin-only').forEach(function(el){
+    el.style.display = (role==='admin') ? '' : 'none';
+  });
+  document.querySelectorAll('.manager-up').forEach(function(el){
+    el.style.display = (role==='admin'||role==='manager') ? '' : 'none';
+  });
+  // Render user management panel if admin
+  if(role==='admin') renderUserManager();
 }
 
 function showLoginError(msg){
@@ -2460,15 +2471,113 @@ function addLogoutBtn(){
   if(!morePane||document.getElementById('logout-btn-wrap')) return;
   var div = document.createElement('div');
   div.id='logout-btn-wrap';
-  div.innerHTML='<div class="sec">Account</div><div class="card" style="display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:13px;font-weight:500;" id="logged-in-name">–</div><div class="muted" id="logged-in-role">–</div></div><button class="btn bd" onclick="doLogout()">Sign out</button></div>';
+  div.innerHTML=
+    '<div class="sec">Account</div>'+
+    '<div class="card" style="margin-bottom:10px;">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'+
+        '<div>'+
+          '<div style="font-size:14px;font-weight:600;" id="logged-in-name">–</div>'+
+          '<div class="muted" id="logged-in-email" style="font-size:11px;">–</div>'+
+          '<div style="margin-top:4px;" id="logged-in-role-badge"></div>'+
+        '</div>'+
+        '<button class="btn bd" onclick="doLogout()">Sign out</button>'+
+      '</div>'+
+    '</div>'+
+    // Admin-only: user management panel
+    '<div class="admin-only" style="display:none;">'+
+      '<div class="sec">User management <span style="font-size:10px;background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd;border-radius:20px;padding:2px 7px;font-weight:600;">Admin only</span></div>'+
+      '<div id="user-manager-wrap"></div>'+
+    '</div>';
   morePane.insertBefore(div, morePane.firstChild);
 }
 
 function updateAccountCard(){
   var n=document.getElementById('logged-in-name');
-  var r=document.getElementById('logged-in-role');
-  if(n&&CURRENT_USER) n.textContent=CURRENT_USER.name||CURRENT_USER.email||'User';
-  if(r&&CURRENT_USER) r.textContent=CURRENT_USER.role||'';
+  var em=document.getElementById('logged-in-email');
+  var rb=document.getElementById('logged-in-role-badge');
+  if(!CURRENT_USER) return;
+  if(n) n.textContent=CURRENT_USER.name||CURRENT_USER.email||'User';
+  if(em) em.textContent=CURRENT_USER.email||'';
+  if(rb){
+    var roleColors={admin:'background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd;',manager:'background:#f0f7ee;color:#2d7024;border:1px solid #a8d69d;',attendant:'background:#eff6ff;color:#2563eb;border:1px solid #93c5fd;',vet:'background:#fdf6e3;color:#b07a08;border:1px solid #f5d98a;'};
+    var role=CURRENT_USER.role||'attendant';
+    rb.innerHTML='<span style="display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;'+( roleColors[role]||roleColors.attendant)+'">'+role.charAt(0).toUpperCase()+role.slice(1)+'</span>';
+  }
+}
+
+// ── USER MANAGEMENT (admin only) ────────────────────────────────────────────
+async function renderUserManager(){
+  var wrap = document.getElementById('user-manager-wrap');
+  if(!wrap) return;
+  wrap.innerHTML='<div class="muted" style="font-size:12px;padding:8px 0;">Loading users…</div>';
+  var profiles = await sbGet('user_profiles','select=*&order=created_at.asc');
+  if(!profiles){ wrap.innerHTML='<div class="muted" style="font-size:12px;">Could not load users.</div>'; return; }
+  var roleOptions=['admin','manager','attendant','vet'].map(function(r){return '<option value="'+r+'">'+r.charAt(0).toUpperCase()+r.slice(1)+'</option>';}).join('');
+  wrap.innerHTML=profiles.map(function(p,i){
+    var isMe=CURRENT_USER&&p.id===CURRENT_USER.id;
+    return '<div class="cf" style="margin-bottom:7px;">'+
+      '<div class="fb" style="gap:10px;flex-wrap:wrap;">'+
+        '<div style="flex:1;min-width:120px;">'+
+          '<div style="font-size:13px;font-weight:500;">'+(p.name||'–')+(isMe?' <span style="font-size:10px;color:#9ca3af;">(you)</span>':'')+'</div>'+
+          '<div style="font-size:11px;color:var(--muted);">'+(p.email||'–')+'</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:6px;align-items:center;">'+
+          '<select id="ur-role-'+i+'" style="font-size:12px;padding:4px 6px;" '+(isMe?'disabled':'')+'>'
+            +['admin','manager','attendant','vet'].map(function(r){return '<option value="'+r+'"'+(p.role===r?' selected':'')+'">'+r.charAt(0).toUpperCase()+r.slice(1)+'</option>';}).join('')+
+          '</select>'+
+          '<input id="ur-name-'+i+'" style="font-size:12px;padding:4px 6px;width:100px;" value="'+(p.name||'')+'" placeholder="Name">'+
+          '<button class="btn bp bsm" onclick="saveUserRole(''+p.id+'','+i+')" '+(isMe?'disabled':'')+'>Save</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('')+
+  '<div class="sec" style="margin-top:12px;">Invite new user</div>'+
+  '<div class="cf">'+
+    '<div class="fr"><div class="fg" style="margin:0;"><label>Email</label><input id="invite-email" type="email" placeholder="staff@email.com"></div>'+
+    '<div class="fg" style="margin:0;"><label>Role</label><select id="invite-role">'+roleOptions+'</select></div></div>'+
+    '<button class="btn bp bfull mt8" onclick="inviteUser()">Send invitation email</button>'+
+    '<div id="invite-status" style="display:none;margin-top:7px;font-size:12px;padding:7px 10px;border-radius:8px;"></div>'+
+  '</div>';
+}
+
+async function saveUserRole(uid, idx){
+  var role = document.getElementById('ur-role-'+idx).value;
+  var name = document.getElementById('ur-name-'+idx).value.trim();
+  var ok = await sbPatch('user_profiles',{role:role,name:name,updated_at:new Date().toISOString()},'id=eq.'+uid);
+  if(ok!==null){ toast('User updated'); renderUserManager(); }
+  else toast('Update failed — check permissions');
+}
+
+async function inviteUser(){
+  var email=(document.getElementById('invite-email').value||'').trim();
+  var role=document.getElementById('invite-role').value;
+  var st=document.getElementById('invite-status');
+  if(!email){toast('Enter an email address');return;}
+  st.style.display='block';st.style.background='#eff6ff';st.style.color='#2563eb';st.style.border='1px solid #93c5fd';
+  st.textContent='Sending invitation…';
+  // Use Supabase Admin invite endpoint
+  try{
+    var res=await fetch(SUPA_URL+'/auth/v1/invite',{
+      method:'POST',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY_AUTH,'Content-Type':'application/json'},
+      body:JSON.stringify({email:email})
+    });
+    var data=await res.json();
+    if(res.ok&&data.id){
+      // Pre-set their role
+      await sbUpsert('user_profiles',[{id:data.id,email:email,role:role,name:'',created_at:new Date().toISOString(),updated_at:new Date().toISOString()}]);
+      st.style.background='#f0f7ee';st.style.color='#2d7024';st.style.border='1px solid #a8d69d';
+      st.textContent='Invitation sent to '+email+' with role: '+role;
+      document.getElementById('invite-email').value='';
+      setTimeout(renderUserManager,1000);
+    } else {
+      st.style.background='#fef2f2';st.style.color='#dc2626';st.style.border='1px solid #fca5a5';
+      st.textContent='Error: '+(data.msg||data.error_description||JSON.stringify(data));
+    }
+  }catch(e){
+    st.style.background='#fef2f2';st.style.color='#dc2626';st.style.border='1px solid #fca5a5';
+    st.textContent='Connection error: '+e.message;
+  }
 }
 
 // ============================================================
