@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
 --g50:#f0f7ee;--g100:#d4ebce;--g200:#a8d69d;--g400:#5aaa4e;--g500:#3a8c2f;--g600:#2d7024;--g700:#1f5219;
@@ -217,6 +218,31 @@ tr:hover td{background:var(--gray50);}
 </style>
 </head>
 <body>
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="display:none;position:fixed;inset:0;background:#f4f6f2;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
+  <div style="width:100%;max-width:400px;">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="font-size:40px;margin-bottom:8px;">🌿</div>
+      <div style="font-size:22px;font-weight:700;color:#2d7024;letter-spacing:-.5px;" id="login-farm-name">Feedlot Manager</div>
+      <div style="font-size:13px;color:#6b7280;margin-top:4px;">Farm Management System</div>
+    </div>
+    <div style="background:#fff;border-radius:20px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,.10);">
+      <div id="login-error" style="display:none;background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;padding:9px 12px;border-radius:8px;font-size:12px;margin-bottom:12px;"></div>
+      <div style="margin-bottom:12px;"><label style="font-size:11px;font-weight:500;color:#6b7280;display:block;margin-bottom:4px;">Email address</label>
+        <input type="email" id="login-email" placeholder="you@example.com" style="width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:inherit;" autocomplete="email">
+      </div>
+      <div style="margin-bottom:16px;"><label style="font-size:11px;font-weight:500;color:#6b7280;display:block;margin-bottom:4px;">Password</label>
+        <input type="password" id="login-pass" placeholder="••••••••" style="width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:inherit;" autocomplete="current-password">
+      </div>
+      <button onclick="doLogin()" id="login-btn" style="width:100%;padding:12px;background:#2d7024;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Sign in</button>
+      <div style="text-align:center;margin-top:12px;font-size:12px;color:#9ca3af;">Enter your email and password<br>Contact your farm manager if you need access</div>
+    </div>
+  </div>
+</div>
+
+<!-- OFFLINE / SYNC BADGE -->
+<div id="offline-badge" style="display:none;position:fixed;bottom:70px;right:12px;background:#374151;color:#fff;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:500;z-index:98;cursor:pointer;" onclick="flushSyncQueue()" title="Tap to sync"></div>
+
 <div class="app">
 
 <!-- TOPBAR -->
@@ -414,6 +440,7 @@ tr:hover td{background:var(--gray50);}
       <button class="btn bp" onclick="GR('screen')">Generate</button>
       <button class="btn bs" onclick="GR('pdf')">&#x2193; PDF</button>
       <button class="btn bs" onclick="GR('print')">Print</button>
+      <button class="btn bs" onclick="GR('excel')" style="background:#f0f7ee;color:#2d7024;border-color:#a8d69d;">&#x2193; Excel</button>
     </div>
   </div>
   <div id="r-out" class="hidden">
@@ -428,6 +455,26 @@ tr:hover td{background:var(--gray50);}
 <!-- MORE (Settings + AI) -->
 <div id="pane-more" class="pane">
   <div class="page-title">Settings & Advisor</div>
+
+  <div class="sec">Email alerts &amp; daily report</div>
+  <div class="card">
+    <div class="fg"><label>Resend API key</label><input type="password" id="set-resend-key" placeholder="re_xxxxxxxxxxxxxxxxxxxx"></div>
+    <div class="fg"><label>From email (must be verified in Resend)</label><input type="email" id="set-from-email" placeholder="reports@yourfarm.com"></div>
+    <div class="fg"><label>Report recipients (comma-separated emails)</label><textarea id="set-report-emails" style="min-height:55px;" placeholder="manager@farm.com, vet@farm.com"></textarea></div>
+    <div class="fr">
+      <div class="fg" style="margin:0;"><label>Daily report time (EAT)</label><input type="time" id="set-report-time" value="06:00"></div>
+      <div class="fg" style="margin:0;"><label>Alert on stock reorder</label><select id="set-alert-stock"><option value="yes">Yes — send alert</option><option value="no">No</option></select></div>
+    </div>
+    <div class="fr mt8">
+      <div class="fg" style="margin:0;"><label>Alert health events due</label><select id="set-alert-health"><option value="3">3 days before</option><option value="1">1 day before</option><option value="7">7 days before</option></select></div>
+      <div class="fg" style="margin:0;"><label>Alert weighing overdue</label><select id="set-alert-weigh"><option value="yes">Yes</option><option value="no">No</option></select></div>
+    </div>
+    <div class="brow">
+      <button class="btn bp" onclick="saveEmailSettings()">Save alert settings</button>
+      <button class="btn bs" onclick="sendTestEmail()">Send test email</button>
+    </div>
+    <div id="email-status" style="display:none;margin-top:8px;font-size:12px;padding:8px 10px;border-radius:8px;"></div>
+  </div>
 
   <div class="sec">Database connection (Supabase)</div>
   <div class="card">
@@ -2284,7 +2331,570 @@ function init(){
   }
 }
 
-window.addEventListener('DOMContentLoaded',init);
+
+// ============================================================
+// PHASE 4 — AUTH, ROLES, OFFLINE SYNC, EXCEL, EMAIL ALERTS
+// ============================================================
+
+// AUTH STATE
+var CURRENT_USER = null; // {id, email, role, name, assigned_lots}
+var ROLE_PERMS = {
+  manager:  {dash:1,animals:1,lots:1,health:1,feed:1,inv:1,rep:1,more:1},
+  attendant:{dash:1,animals:1,lots:1,health:1,feed:1,inv:0,rep:0,more:0},
+  vet:      {dash:1,animals:1,lots:0,health:1,feed:0,inv:0,rep:0,more:0}
+};
+
+// ============================================================
+// SUPABASE AUTH
+// ============================================================
+async function doLogin(){
+  var email = document.getElementById('login-email').value.trim();
+  var pass  = document.getElementById('login-pass').value;
+  var errEl = document.getElementById('login-error');
+  var btn   = document.getElementById('login-btn');
+  errEl.style.display='none';
+  if(!email||!pass){showLoginError('Enter your email and password.');return;}
+  btn.textContent='Signing in…'; btn.disabled=true;
+  try{
+    var res = await fetch(SUPA_URL+'/auth/v1/token?grant_type=password',{
+      method:'POST',
+      headers:{'apikey':SUPA_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({email:email,password:pass})
+    });
+    var data = await res.json();
+    if(!res.ok||!data.access_token){showLoginError(data.error_description||data.msg||'Invalid email or password.');btn.textContent='Sign in';btn.disabled=false;return;}
+    // Store token and load user profile
+    localStorage.setItem('ffm_token', data.access_token);
+    localStorage.setItem('ffm_refresh', data.refresh_token||'');
+    SUPA_KEY_AUTH = data.access_token; // use JWT for subsequent requests
+    await loadUserProfile(data.user.id, data.access_token);
+    hideLoginScreen();
+    btn.textContent='Sign in'; btn.disabled=false;
+  }catch(e){showLoginError('Connection error. Check internet.');btn.textContent='Sign in';btn.disabled=false;}
+}
+
+var SUPA_KEY_AUTH = null; // JWT token when logged in
+
+function authHeader(){
+  return SUPA_KEY_AUTH ? 'Bearer '+SUPA_KEY_AUTH : 'Bearer '+SUPA_KEY;
+}
+
+async function loadUserProfile(uid, token){
+  var res = await fetch(SUPA_URL+'/rest/v1/user_profiles?id=eq.'+uid+'&select=*',{
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+token}
+  });
+  var profiles = await res.json();
+  if(profiles&&profiles.length){
+    var p = profiles[0];
+    CURRENT_USER = {id:uid,email:p.email||'',role:p.role||'attendant',name:p.name||'',assigned_lots:p.assigned_lots||''};
+  } else {
+    // First login — default to manager if no profile exists
+    CURRENT_USER = {id:uid,email:'',role:'manager',name:'Farm Manager',assigned_lots:''};
+  }
+  localStorage.setItem('ffm_user', JSON.stringify(CURRENT_USER));
+  applyRoleUI();
+}
+
+function applyRoleUI(){
+  if(!CURRENT_USER) return;
+  var role = CURRENT_USER.role||'attendant';
+  var perms = ROLE_PERMS[role]||ROLE_PERMS.attendant;
+  // Show/hide nav items based on role
+  document.querySelectorAll('.ni[data-p]').forEach(function(btn){
+    var pane = btn.getAttribute('data-p');
+    btn.style.display = perms[pane] ? '' : 'none';
+  });
+  // Update topbar with user name
+  var sub = document.getElementById('tb-sub');
+  if(sub) sub.textContent = CURRENT_USER.name + ' · ' + CURRENT_USER.role;
+}
+
+function showLoginError(msg){
+  var el = document.getElementById('login-error');
+  el.textContent=msg; el.style.display='block';
+}
+
+function showLoginScreen(){
+  var ls = document.getElementById('login-screen');
+  if(ls){ ls.style.display='flex'; }
+  // Pre-fill farm name on login screen
+  var fn = document.getElementById('login-farm-name');
+  if(fn&&SET&&SET.name) fn.textContent=SET.name;
+}
+
+function hideLoginScreen(){
+  var ls = document.getElementById('login-screen');
+  if(ls){ ls.style.display='none'; }
+  loadFromCloud().then(function(ok){ if(ok){RD();RA();RS();RH();RI();RF();} });
+}
+
+async function doLogout(){
+  if(!confirm('Sign out?')) return;
+  localStorage.removeItem('ffm_token');
+  localStorage.removeItem('ffm_refresh');
+  localStorage.removeItem('ffm_user');
+  CURRENT_USER=null; SUPA_KEY_AUTH=null;
+  // Reset nav
+  document.querySelectorAll('.ni[data-p]').forEach(function(b){b.style.display='';});
+  showLoginScreen();
+}
+
+async function checkAuthState(){
+  var token = localStorage.getItem('ffm_token');
+  var userStr = localStorage.getItem('ffm_user');
+  if(token&&userStr){
+    try{
+      CURRENT_USER = JSON.parse(userStr);
+      SUPA_KEY_AUTH = token;
+      // Verify token is still valid
+      var res = await fetch(SUPA_URL+'/auth/v1/user',{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+token}});
+      if(res.ok){ applyRoleUI(); return true; }
+    }catch(e){}
+  }
+  return false;
+}
+
+// Add logout button to More pane dynamically
+function addLogoutBtn(){
+  var morePane = document.getElementById('pane-more');
+  if(!morePane||document.getElementById('logout-btn-wrap')) return;
+  var div = document.createElement('div');
+  div.id='logout-btn-wrap';
+  div.innerHTML='<div class="sec">Account</div><div class="card" style="display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:13px;font-weight:500;" id="logged-in-name">–</div><div class="muted" id="logged-in-role">–</div></div><button class="btn bd" onclick="doLogout()">Sign out</button></div>';
+  morePane.insertBefore(div, morePane.firstChild);
+}
+
+function updateAccountCard(){
+  var n=document.getElementById('logged-in-name');
+  var r=document.getElementById('logged-in-role');
+  if(n&&CURRENT_USER) n.textContent=CURRENT_USER.name||CURRENT_USER.email||'User';
+  if(r&&CURRENT_USER) r.textContent=CURRENT_USER.role||'';
+}
+
+// ============================================================
+// OFFLINE SYNC QUEUE (IndexedDB-backed)
+// ============================================================
+var syncQueue = []; // [{action, table, data, params, id}]
+var isOnline = navigator.onLine;
+
+window.addEventListener('online',  function(){ isOnline=true;  updateOfflineBadge(); flushSyncQueue(); });
+window.addEventListener('offline', function(){ isOnline=false; updateOfflineBadge(); });
+
+function updateOfflineBadge(){
+  var badge = document.getElementById('offline-badge');
+  if(!badge) return;
+  if(!isOnline){
+    badge.style.display='block';
+    badge.textContent='● Offline'+(syncQueue.length?' · '+syncQueue.length+' pending':'');
+  } else if(syncQueue.length>0){
+    badge.style.display='block';
+    badge.textContent='↑ '+syncQueue.length+' syncing…';
+  } else {
+    badge.style.display='none';
+  }
+}
+
+function queueOrRun(method, table, data, params){
+  if(isOnline&&CONFIGURED){
+    return sbReq(method, table, data, params);
+  } else {
+    syncQueue.push({method:method,table:table,data:data,params:params,ts:Date.now()});
+    saveSyncQueue();
+    updateOfflineBadge();
+    return Promise.resolve(null);
+  }
+}
+
+function saveSyncQueue(){
+  try{ localStorage.setItem('ffm_sync_q', JSON.stringify(syncQueue)); }catch(e){}
+}
+
+function loadSyncQueue(){
+  try{ var r=localStorage.getItem('ffm_sync_q'); if(r) syncQueue=JSON.parse(r); }catch(e){}
+}
+
+async function flushSyncQueue(){
+  if(!isOnline||!CONFIGURED||!syncQueue.length) return;
+  var q = syncQueue.slice();
+  syncQueue = [];
+  saveSyncQueue();
+  updateOfflineBadge();
+  for(var i=0;i<q.length;i++){
+    var item=q[i];
+    try{ await sbReq(item.method,item.table,item.data,item.params); }
+    catch(e){ syncQueue.push(item); }
+  }
+  saveSyncQueue();
+  updateOfflineBadge();
+  if(syncQueue.length===0) toast('All changes synced to cloud');
+}
+
+// ============================================================
+// SERVICE WORKER REGISTRATION (offline caching)
+// ============================================================
+function registerServiceWorker(){
+  if(!('serviceWorker' in navigator)) return;
+  // Inline SW as data URL since we're a single HTML file
+  var swCode = `
+self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('activate', e => { clients.claim(); });
+self.addEventListener('fetch', e => {
+  if(e.request.url.includes('supabase.co')||e.request.url.includes('googleapis')||e.request.url.includes('resend')) return;
+  e.respondWith(
+    caches.open('ffm-v1').then(cache =>
+      cache.match(e.request).then(cached => {
+        var net = fetch(e.request).then(res => { cache.put(e.request, res.clone()); return res; }).catch(()=>cached);
+        return cached || net;
+      })
+    )
+  );
+});`;
+  var blob = new Blob([swCode],{type:'application/javascript'});
+  var url  = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).catch(function(){});
+}
+
+// ============================================================
+// EXCEL EXPORT
+// ============================================================
+function GR_Excel(type){
+  if(typeof XLSX==='undefined'){toast('Excel library loading, try again');return;}
+  var wb = XLSX.utils.book_new();
+  var T  = getTarget();
+  var act = DB.animals.filter(function(a){return a.status!=='sold';});
+
+  if(type==='daily'||type==='animals'){
+    // Sheet 1: Animal register
+    var aRows = [['Tag','Lot','Breed','Sex','DOB','Entry Date','Current Weight (kg)','ADG (g/day)','Days to Target','Next Weigh','Status','Notes']];
+    DB.animals.forEach(function(a){
+      var g=adg(a),d=dtm(a);
+      aRows.push([a.tag,'Lot '+a.lot,a.breed,a.sex,a.dob||'',a.entry,cw(a).toFixed(1),g!==null?Math.round(g*1000):'',d===0?'READY':d!==null?d:'',nextWeigh(a)||'',a.status,a.notes]);
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aRows), 'Animals');
+
+    // Sheet 2: Weight history
+    var wRows=[['Tag','Date','Weight (kg)','Change (kg)','Condition','Recorded By','Notes']];
+    DB.animals.forEach(function(a){
+      a.weights.forEach(function(w,i){
+        var gain=i>0?(w.wt-a.weights[i-1].wt).toFixed(2):'';
+        wRows.push([a.tag,w.date,w.wt,gain,w.cond||'',w.by||'',w.notes||'']);
+      });
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wRows), 'Weight History');
+  }
+
+  if(type==='inventory'||type==='daily'){
+    // Inventory by category
+    var catGroups=['Feed','Health','Machinery','Supplies'];
+    catGroups.forEach(function(cat){
+      var items=DB.inventory.filter(function(i){return i.cat.startsWith(cat);});
+      if(!items.length) return;
+      var iRows=[['Item','Unit','Stock','Daily Use','Days Left','Reorder At','Unit Cost (KES)','Stock Value (KES)','Supplier','Status']];
+      items.forEach(function(i){
+        var days=i.daily>0?Math.floor(i.stock/i.daily):'N/A';
+        var val=(i.stock*(i.cost||0)).toFixed(2);
+        var st=i.stock<=i.reorder?'REORDER NOW':i.stock<=i.reorder*1.5?'Low':'OK';
+        iRows.push([i.name,i.unit,i.stock,i.daily||0,days,i.reorder,(i.cost||0).toFixed(2),val,i.supplier||'',st]);
+      });
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(iRows), cat+' Inventory');
+    });
+  }
+
+  if(type==='health'){
+    var hRows=[['Type','Drug/Product','Target','Date','Dose','Route','Administered By','Status','Notes']];
+    DB.health.forEach(function(e){ hRows.push([e.type,e.drug,e.target,e.date,e.dose||'',e.route||'',e.by||'',e.status,e.notes||'']); });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hRows), 'Health Log');
+  }
+
+  if(type==='sales'){
+    var sold=DB.animals.filter(function(a){return a.status==='sold';});
+    var sRows=[['Tag','Breed','Sex','DOB','Entry Date','Sale Date','Sale Weight (kg)','Purchase Price (KES)','Sale Price (KES)','Gross Profit (KES)','Sold From Lot','Buyer','Buyer Phone','Notes']];
+    sold.forEach(function(a){
+      sRows.push([a.tag,a.breed,a.sex,a.dob||'',a.entry,a.saleDate||'',a.saleWeight||cw(a),(a.purchasePrice||0),(a.salePrice||0),((a.salePrice||0)-(a.purchasePrice||0)),a.soldFromLotLabel||'',a.buyer||'',a.buyerPhone||'',a.saleNotes||'']);
+    });
+    // Summary row
+    var totRev=sold.reduce(function(s,a){return s+(a.salePrice||0);},0);
+    var totCost=sold.reduce(function(s,a){return s+(a.purchasePrice||0);},0);
+    sRows.push([]);
+    sRows.push(['TOTAL','','','','','','','KES '+totCost.toLocaleString(),'KES '+totRev.toLocaleString(),'KES '+(totRev-totCost).toLocaleString(),'','','','']);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sRows), 'Sales Report');
+  }
+
+  if(type==='weekly'||type==='lot'){
+    var lotRows=[['Lot','Weight Range','Animals','Avg Weight (kg)','Ready for Sale','Lot Capacity','Utilisation %']];
+    LOT_CONFIG.forEach(function(lc){
+      var animals=act.filter(function(a){return a.lot===lc.num;});
+      if(!animals.length) return;
+      var avg=(animals.reduce(function(s,a){return s+cw(a);},0)/animals.length).toFixed(1);
+      var ready=animals.filter(function(a){return cw(a)>=T;}).length;
+      var range=lc.obs?'Observation':lc.min+'–'+(lc.max===999?'∞':lc.max)+' kg';
+      lotRows.push([lc.label,range,animals.length,avg,ready,lc.cap,Math.round(animals.length/lc.cap*100)+'%']);
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(lotRows), 'Lot Summary');
+  }
+
+  if(type==='moves'){
+    var mvRows=[['Date','Tag','From Lot','To Lot','Weight (kg)','Reason']];
+    moveLog.forEach(function(m){ mvRows.push([m.date,m.tag,'Lot '+m.from,'Lot '+m.to,m.wt.toFixed(1),m.reason]); });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(mvRows), 'Lot Movements');
+  }
+
+  if(!wb.SheetNames.length){ toast('No data to export for this report type'); return; }
+
+  // Style header rows
+  wb.SheetNames.forEach(function(name){
+    var ws=wb.Sheets[name];
+    var range=XLSX.utils.decode_range(ws['!ref']||'A1');
+    for(var C=range.s.c;C<=range.e.c;C++){
+      var addr=XLSX.utils.encode_cell({r:0,c:C});
+      if(ws[addr]) ws[addr].s={font:{bold:true},fill:{fgColor:{rgb:'2D7024'}},font:{color:{rgb:'FFFFFF'},bold:true}};
+    }
+  });
+
+  var fname = (SET.name||'Farm').replace(/\s+/g,'_')+'_'+type+'_'+today()+'.xlsx';
+  XLSX.writeFile(wb, fname);
+  toast('Excel file downloaded');
+}
+
+// ============================================================
+// EMAIL ALERTS via Resend API
+// ============================================================
+var EMAIL_SET = {key:'',from:'',recipients:[],reportTime:'06:00',alertStock:true,alertHealth:3,alertWeigh:true};
+
+function loadEmailSettings(){
+  try{
+    var s=localStorage.getItem('ffm_email_set');
+    if(s) EMAIL_SET=Object.assign(EMAIL_SET,JSON.parse(s));
+  }catch(e){}
+  var k=document.getElementById('set-resend-key');
+  var f=document.getElementById('set-from-email');
+  var r=document.getElementById('set-report-emails');
+  var t=document.getElementById('set-report-time');
+  var as=document.getElementById('set-alert-stock');
+  var ah=document.getElementById('set-alert-health');
+  var aw=document.getElementById('set-alert-weigh');
+  if(k) k.value=EMAIL_SET.key||'';
+  if(f) f.value=EMAIL_SET.from||'';
+  if(r) r.value=(EMAIL_SET.recipients||[]).join(', ');
+  if(t) t.value=EMAIL_SET.reportTime||'06:00';
+  if(as) as.value=EMAIL_SET.alertStock?'yes':'no';
+  if(ah) ah.value=EMAIL_SET.alertHealth||3;
+  if(aw) aw.value=EMAIL_SET.alertWeigh?'yes':'no';
+}
+
+function saveEmailSettings(){
+  EMAIL_SET.key = (document.getElementById('set-resend-key').value||'').trim();
+  EMAIL_SET.from = (document.getElementById('set-from-email').value||'').trim();
+  EMAIL_SET.recipients = (document.getElementById('set-report-emails').value||'').split(',').map(function(e){return e.trim();}).filter(Boolean);
+  EMAIL_SET.reportTime = document.getElementById('set-report-time').value||'06:00';
+  EMAIL_SET.alertStock = document.getElementById('set-alert-stock').value==='yes';
+  EMAIL_SET.alertHealth = parseInt(document.getElementById('set-alert-health').value)||3;
+  EMAIL_SET.alertWeigh = document.getElementById('set-alert-weigh').value==='yes';
+  localStorage.setItem('ffm_email_set', JSON.stringify(EMAIL_SET));
+  toast('Email settings saved');
+  // Save to Supabase settings too
+  if(CONFIGURED) sbUpsert('farm_settings',[{id:1,resend_key:EMAIL_SET.key,from_email:EMAIL_SET.from,report_recipients:EMAIL_SET.recipients.join(','),report_time:EMAIL_SET.reportTime,updated_at:new Date().toISOString()}]);
+}
+
+async function sendEmailViaResend(to, subject, html){
+  if(!EMAIL_SET.key||!EMAIL_SET.from){
+    showEmailStatus('error','Enter your Resend API key and from email first.');
+    return false;
+  }
+  try{
+    var res = await fetch('https://api.resend.com/emails',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+EMAIL_SET.key,'Content-Type':'application/json'},
+      body: JSON.stringify({from:EMAIL_SET.from,to:Array.isArray(to)?to:[to],subject:subject,html:html})
+    });
+    var data = await res.json();
+    if(res.ok&&data.id) return true;
+    console.error('Resend error:',data);
+    return false;
+  }catch(e){ console.error('Email error:',e); return false; }
+}
+
+function buildDailyReportHTML(){
+  var T=getTarget();
+  var act=DB.animals.filter(function(a){return a.status!=='sold';});
+  var ready=act.filter(function(a){return cw(a)>=T;});
+  var fp=DB.feedProgram||{};
+  var low=DB.inventory.filter(function(i){return i.reorder>0&&i.stock<=i.reorder;});
+  var watchAnimals=DB.animals.filter(function(a){return a.lot===15||a.status==='watch';});
+  var totals=calcLotFeedTotals();
+  var rations=getFeedRations();
+
+  var feedRows=LOT_CONFIG.filter(function(lc){return act.filter(function(a){return a.lot===lc.num;}).length>0;}).map(function(lc){
+    var n=act.filter(function(a){return a.lot===lc.num;}).length;
+    var r=rations[lc.num]||{silage:0,concentrate:0,hay:0};
+    var s=parseFloat(r.silage)||0,cc=parseFloat(r.concentrate)||0,h=parseFloat(r.hay)||0;
+    var range=lc.obs?'Observation':lc.min+'–'+(lc.max===999?'∞':lc.max)+' kg';
+    return '<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:7px 10px;font-weight:500;">'+lc.label+'</td><td style="padding:7px 10px;color:#6b7280;">'+range+'</td><td style="padding:7px 10px;text-align:center;">'+n+'</td><td style="padding:7px 10px;text-align:right;font-family:monospace;">'+s.toFixed(1)+' → '+(n*s).toFixed(1)+' kg</td><td style="padding:7px 10px;text-align:right;font-family:monospace;">'+cc.toFixed(1)+' → '+(n*cc).toFixed(1)+' kg</td><td style="padding:7px 10px;text-align:right;font-family:monospace;">'+h.toFixed(1)+' → '+(n*h).toFixed(1)+' kg</td></tr>';
+  }).join('');
+
+  var alertRows=watchAnimals.map(function(a){return '<tr style="border-bottom:1px solid #fee2e2;"><td style="padding:6px 10px;">'+a.tag+'</td><td style="padding:6px 10px;">Lot '+a.lot+'</td><td style="padding:6px 10px;font-family:monospace;">'+cw(a).toFixed(1)+' kg</td><td style="padding:6px 10px;color:#dc2626;">'+( a.notes||'Under observation')+'</td></tr>';}).join('');
+
+  var stockRows=low.map(function(i){return '<tr style="border-bottom:1px solid #fee2e2;"><td style="padding:6px 10px;">'+i.name+'</td><td style="padding:6px 10px;font-family:monospace;">'+i.stock+' '+i.unit+'</td><td style="padding:6px 10px;color:#dc2626;">Reorder at '+i.reorder+' — ORDER NOW</td></tr>';}).join('');
+
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#f4f6f2;font-family:Arial,sans-serif;">'
+  +'<div style="max-width:600px;margin:20px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);">'
+  +'<div style="background:#2d7024;color:#fff;padding:20px 24px;">'
+  +'<div style="font-size:20px;font-weight:700;">'+(SET.name||'Farm')+' — Daily Report</div>'
+  +'<div style="font-size:13px;opacity:.85;margin-top:4px;">'+new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})+'&nbsp;&nbsp;·&nbsp;&nbsp;'+(SET.location||'')+'</div>'
+  +'</div>'
+  +'<div style="padding:20px 24px;">'
+  // Flock overview
+  +'<h2 style="font-size:14px;font-weight:700;color:#1a2214;margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em;">Flock overview</h2>'
+  +'<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">'
+  +'<tr style="background:#f9fafb;"><td style="padding:8px 12px;font-size:13px;">Active animals</td><td style="padding:8px 12px;font-family:monospace;font-weight:700;text-align:right;">'+act.length+'</td></tr>'
+  +'<tr><td style="padding:8px 12px;font-size:13px;">Ready for sale (≥'+T+' kg)</td><td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#2d7024;text-align:right;">'+ready.length+'</td></tr>'
+  +'<tr style="background:#f9fafb;"><td style="padding:8px 12px;font-size:13px;">Under observation (Lot 15)</td><td style="padding:8px 12px;font-family:monospace;font-weight:700;color:'+(watchAnimals.length>0?'#dc2626':'#2d7024')+';text-align:right;">'+watchAnimals.length+'</td></tr>'
+  +'<tr><td style="padding:8px 12px;font-size:13px;">Flock condition</td><td style="padding:8px 12px;font-size:13px;text-align:right;">'+(fp.flockCondition||'–')+'</td></tr>'
+  +'<tr style="background:#f9fafb;"><td style="padding:8px 12px;font-size:13px;">Feed palatability</td><td style="padding:8px 12px;font-size:13px;text-align:right;">'+(fp.palatability||'–')+'</td></tr>'
+  +'<tr><td style="padding:8px 12px;font-size:13px;">Water intake</td><td style="padding:8px 12px;font-size:13px;text-align:right;">'+(fp.water||'–')+'</td></tr>'
+  +'</table>'
+  // Feeding program
+  +'<h2 style="font-size:14px;font-weight:700;color:#1a2214;margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em;">Feeding program</h2>'
+  +'<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px;">'
+  +'<thead><tr style="background:#2d7024;color:#fff;"><th style="padding:7px 10px;text-align:left;">Lot</th><th style="padding:7px 10px;text-align:left;">Range</th><th style="padding:7px 10px;">Animals</th><th style="padding:7px 10px;text-align:right;">Silage</th><th style="padding:7px 10px;text-align:right;">Concentrate</th><th style="padding:7px 10px;text-align:right;">Hay</th></tr></thead>'
+  +'<tbody>'+feedRows+'</tbody>'
+  +'<tfoot><tr style="background:#f0f7ee;font-weight:700;"><td colspan="2" style="padding:7px 10px;">TOTALS</td><td style="padding:7px 10px;text-align:center;">'+act.length+'</td><td style="padding:7px 10px;text-align:right;font-family:monospace;">'+totals.silage.toFixed(1)+' kg</td><td style="padding:7px 10px;text-align:right;font-family:monospace;">'+totals.concentrate.toFixed(1)+' kg</td><td style="padding:7px 10px;text-align:right;font-family:monospace;">'+totals.hay.toFixed(1)+' kg</td></tr></tfoot>'
+  +'</table><div style="margin-bottom:20px;"></div>'
+  // Health alerts
+  +(alertRows?'<h2 style="font-size:14px;font-weight:700;color:#dc2626;margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em;">⚠ Health alerts</h2><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fef2f2;border-radius:8px;overflow:hidden;margin-bottom:20px;"><thead><tr style="background:#dc2626;color:#fff;"><th style="padding:6px 10px;text-align:left;">Tag</th><th style="padding:6px 10px;text-align:left;">Lot</th><th style="padding:6px 10px;text-align:left;">Weight</th><th style="padding:6px 10px;text-align:left;">Notes</th></tr></thead><tbody>'+alertRows+'</tbody></table>':'')
+  // Stock alerts
+  +(stockRows?'<h2 style="font-size:14px;font-weight:700;color:#dc2626;margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em;">⚠ Stock reorder alerts</h2><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fef2f2;border-radius:8px;overflow:hidden;margin-bottom:20px;"><thead><tr style="background:#dc2626;color:#fff;"><th style="padding:6px 10px;text-align:left;">Item</th><th style="padding:6px 10px;text-align:left;">Stock</th><th style="padding:6px 10px;text-align:left;">Action</th></tr></thead><tbody>'+stockRows+'</tbody></table>':'')
+  +'</div>'
+  +'<div style="background:#f9fafb;padding:14px 24px;font-size:11px;color:#9ca3af;border-top:1px solid #e5e7eb;">Generated by Feedlot Farm Manager · '+(SET.name||'')+(SET.location?' · '+SET.location:'')+' · '+new Date().toLocaleString()+'</div>'
+  +'</div></body></html>';
+}
+
+async function sendTestEmail(){
+  var st=document.getElementById('email-status');
+  st.style.display='block';st.style.background='#eff6ff';st.style.color='#2563eb';st.style.border='1px solid #93c5fd';
+  st.textContent='Sending test email…';
+  if(!EMAIL_SET.recipients.length){showEmailStatus('error','Add at least one recipient email first.');return;}
+  var html = buildDailyReportHTML();
+  var ok = await sendEmailViaResend(EMAIL_SET.recipients,'[TEST] '+(SET.name||'Farm')+' — Daily Report',html);
+  showEmailStatus(ok?'ok':'error', ok?'Test email sent successfully!':'Failed to send. Check your Resend API key and from email.');
+}
+
+function showEmailStatus(type,msg){
+  var st=document.getElementById('email-status');
+  if(!st)return;
+  st.style.display='block';
+  if(type==='ok'){st.style.background='#f0f7ee';st.style.color='#2d7024';st.style.border='1px solid #a8d69d';}
+  else{st.style.background='#fef2f2';st.style.color='#dc2626';st.style.border='1px solid #fca5a5';}
+  st.textContent=msg;
+}
+
+// Daily report scheduler — checks every minute if it's time to send
+var reportSentToday = false;
+function startDailyReportScheduler(){
+  setInterval(async function(){
+    if(!EMAIL_SET.key||!EMAIL_SET.recipients.length) return;
+    var now=new Date();
+    var timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+    var todayStr=now.toISOString().split('T')[0];
+    var lastSent=localStorage.getItem('ffm_report_sent');
+    if(timeStr===EMAIL_SET.reportTime&&lastSent!==todayStr){
+      localStorage.setItem('ffm_report_sent',todayStr);
+      var html=buildDailyReportHTML();
+      await sendEmailViaResend(EMAIL_SET.recipients,(SET.name||'Farm')+' — Daily Report '+fd(todayStr),html);
+    }
+    // Check stock alerts
+    if(EMAIL_SET.alertStock){
+      var low=DB.inventory.filter(function(i){return i.reorder>0&&i.stock<=i.reorder;});
+      var lastStockAlert=localStorage.getItem('ffm_stock_alert_'+todayStr);
+      if(low.length&&!lastStockAlert){
+        localStorage.setItem('ffm_stock_alert_'+todayStr,'1');
+        var body='<div style="font-family:Arial;padding:20px;"><h2 style="color:#dc2626;">⚠ Stock Reorder Alert — '+(SET.name||'Farm')+'</h2><p>The following items need to be reordered immediately:</p><ul>'+low.map(function(i){return '<li><strong>'+i.name+'</strong> — '+i.stock+' '+i.unit+' remaining (reorder at '+i.reorder+')</li>';}).join('')+'</ul><p style="color:#6b7280;font-size:12px;">Generated '+new Date().toLocaleString()+'</p></div>';
+        await sendEmailViaResend(EMAIL_SET.recipients,'⚠ REORDER ALERT — '+(SET.name||'Farm'),body);
+      }
+    }
+    // Check health event alerts
+    if(EMAIL_SET.alertHealth){
+      var daysAhead=parseInt(EMAIL_SET.alertHealth)||3;
+      var cutoff=new Date();cutoff.setDate(cutoff.getDate()+daysAhead);
+      var due=DB.health.filter(function(e){if(e.status==='done')return false;var d=new Date(e.date);return d<=cutoff&&d>=new Date();});
+      var lastHAlert=localStorage.getItem('ffm_health_alert_'+todayStr);
+      if(due.length&&!lastHAlert){
+        localStorage.setItem('ffm_health_alert_'+todayStr,'1');
+        var body2='<div style="font-family:Arial;padding:20px;"><h2 style="color:#d4920a;">📋 Health Event Reminder — '+(SET.name||'Farm')+'</h2><p>The following health events are due within '+daysAhead+' days:</p><ul>'+due.map(function(e){return '<li><strong>'+e.type+'</strong> — '+e.drug+' for '+e.target+' on '+fd(e.date)+'</li>';}).join('')+'</ul><p style="color:#6b7280;font-size:12px;">Generated '+new Date().toLocaleString()+'</p></div>';
+        await sendEmailViaResend(EMAIL_SET.recipients,'📋 Health Event Due — '+(SET.name||'Farm'),body2);
+      }
+    }
+  }, 60000); // check every minute
+}
+
+// ============================================================
+// WIRE GR() to Excel mode
+// ============================================================
+var _origGR = null;
+function wrapGRForExcel(){
+  // patch GR to handle excel mode
+  var origGR = window.GR;
+  window.GR = function(mode){
+    if(mode==='excel'){ GR_Excel(document.getElementById('r-type').value); return; }
+    origGR(mode);
+  };
+}
+
+// ============================================================
+// PATCH SP() for role-based access
+// ============================================================
+function SP(btn,id){
+  var role = CURRENT_USER?CURRENT_USER.role:'manager';
+  var perms = ROLE_PERMS[role]||ROLE_PERMS.manager;
+  if(!perms[id]){toast('Access restricted — contact your manager');return;}
+  document.querySelectorAll('.ni').forEach(function(b){b.classList.remove('on');});
+  document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('on');});
+  btn.classList.add('on');
+  document.getElementById('pane-'+id).classList.add('on');
+  if(id==='dash')RD();
+  else if(id==='animals')RA();
+  else if(id==='lots')RL();
+  else if(id==='health')RH();
+  else if(id==='feed')RF();
+  else if(id==='inv')RI();
+  else if(id==='rep'){}
+  else if(id==='more'){RS();loadSettings();loadEmailSettings();updateAccountCard();}
+}
+
+// ============================================================
+// PATCH INIT for Phase 4
+// ============================================================
+var _phase4Ready = false;
+function phase4Init(){
+  if(_phase4Ready) return;
+  _phase4Ready = true;
+  loadSyncQueue();
+  updateOfflineBadge();
+  registerServiceWorker();
+  loadEmailSettings();
+  startDailyReportScheduler();
+  wrapGRForExcel();
+  addLogoutBtn();
+  updateAccountCard();
+  // Patch loadSettings to also load email settings
+  var origLS = window.loadSettings;
+  window.loadSettings = function(){ origLS(); loadEmailSettings(); updateAccountCard(); };
+}
+
+window.addEventListener('DOMContentLoaded', function(){
+  // After main init, run phase4 setup then check auth
+  setTimeout(async function(){
+    phase4Init();
+    if(!CONFIGURED){
+      // No Supabase — just run the app in offline mode
+      applyRoleUI(); return;
+    }
+    var loggedIn = await checkAuthState();
+    if(!loggedIn){ showLoginScreen(); }
+    else { applyRoleUI(); updateAccountCard(); }
+  }, 100);
+});
+
 </script>
 </body>
 </html>
