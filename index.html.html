@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Feedlot Farm Manager Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+:root{
+--g50:#f0f7ee;--g100:#d4ebce;--g200:#a8d69d;--g400:#5aaa4e;--g500:#3a8c2f;--g600:#2d7024;--g700:#1f5219;
+--a50:#fdf6e3;--a200:#f5d98a;--a500:#d4920a;--a600:#b07a08;
+--r50:#fef2f2;--r200:#fca5a5;--r500:#dc2626;--r600:#b91c1c;
+--b50:#eff6ff;--b200:#93c5fd;--b500:#3b82f6;--b600:#2563eb;
+--p50:#f5f3ff;--p200:#c4b5fd;--p500:#7c3aed;
+--gray50:#f9fafb;--gray100:#f3f4f6;--gray200:#e5e7eb;--gray300:#d1d5db;
+--gray400:#9ca3af;--gray500:#6b7280;--gray600:#4b5563;--gray700:#374151;
+--gray800:#1f2937;--gray900:#111827;
+--bg:#f4f6f2;--surf:#fff;--bdr:#e5e7eb;
+--txt:#16200f;--muted:#556048;--light:#8a9a80;
+--pri:#2d7024;--prib:#f0f7ee;
+--fn:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+--r:10px;--rl:16px;--sh:0 1px 4px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:var(--fn);background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;min-height:100vh;}
+.app{display:flex;flex-direction:column;min-height:100vh;max-width:500px;margin:0 auto;background:var(--surf);}
+
+/* TOP BAR */
+.topbar{background:var(--pri);color:#fff;padding:14px 16px 10px;position:sticky;top:0;z-index:100;}
+.topbar-row1{display:flex;align-items:center;justify-content:space-between;}
+.topbar-farm{font-size:17px;font-weight:600;letter-spacing:-.3px;}
+.topbar-sub{font-size:11px;opacity:.8;margin-top:2px;}
+.topbar-date{font-size:11px;opacity:.75;font-family:var(--mono);text-align:right;}
+.topbar-stats{display:flex;gap:12px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.2);}
+.ts-item{font-size:11px;opacity:.85;}
+.ts-item strong{font-size:14px;font-weight:600;opacity:1;margin-right:3px;}
+
+/* NAV */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:500px;background:var(--surf);border-top:1px solid var(--bdr);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;padding:7px 2px 5px;cursor:pointer;border:none;background:none;color:var(--light);font-family:var(--fn);}
+.ni.on{color:var(--pri);}
+.ni svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.ni span{font-size:9px;margin-top:2px;font-weight:500;}
+
+/* CONTENT & PANES */
+.content{flex:1;padding:12px 14px 90px;}
+.pane{display:none;animation:fi .15s ease;}.pane.on{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+/* TYPOGRAPHY */
+.sec{font-size:10px;font-weight:600;color:var(--light);text-transform:uppercase;letter-spacing:.07em;margin:14px 0 7px;}
+.page-title{font-size:18px;font-weight:600;letter-spacing:-.3px;margin-bottom:4px;}
+.page-sub{font-size:12px;color:var(--muted);margin-bottom:12px;}
+
+/* CARDS */
+.card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rl);padding:14px;margin-bottom:10px;box-shadow:var(--sh);}
+.cf{background:var(--gray50);border:1px solid var(--bdr);border-radius:var(--r);padding:11px 12px;margin-bottom:7px;}
+
+/* METRICS */
+.mrow{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;}
+.mrow.c3{grid-template-columns:repeat(3,1fr);}
+.mrow.c4{grid-template-columns:repeat(4,1fr);}
+.mc{background:var(--gray50);border-radius:var(--r);padding:10px 11px;border:1px solid var(--bdr);}
+.mc .v{font-size:21px;font-weight:600;line-height:1;font-family:var(--mono);}
+.mc .l{font-size:10px;color:var(--muted);margin-top:3px;}
+.mc.ok .v{color:var(--g600);}
+.mc.warn .v{color:var(--a500);}
+.mc.bad .v{color:var(--r500);}
+.mc.info .v{color:var(--b500);}
+.mc.purple .v{color:var(--p500);}
+
+/* BADGES */
+.bdg{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;}
+.ok{background:var(--g50);color:var(--g600);border:1px solid var(--g200);}
+.warn{background:var(--a50);color:var(--a600);border:1px solid var(--a200);}
+.bad{background:var(--r50);color:var(--r500);border:1px solid var(--r200);}
+.info{background:var(--b50);color:var(--b600);border:1px solid var(--b200);}
+.gray{background:var(--gray100);color:var(--gray600);border:1px solid var(--gray200);}
+.purple{background:var(--p50);color:var(--p500);border:1px solid var(--p200);}
+
+/* FORMS */
+.fg{margin-bottom:9px;}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.fr.c3{grid-template-columns:1fr 1fr 1fr;}
+label{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:3px;}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-family:var(--fn);font-size:13px;color:var(--txt);background:var(--surf);-webkit-appearance:none;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(45,112,36,.1);}
+textarea{resize:vertical;min-height:55px;}
+input[type=number]{font-family:var(--mono);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 14px;border-radius:var(--r);font-family:var(--fn);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;}
+.bp{background:var(--pri);color:#fff;}.bp:active{background:var(--g700);}
+.bs{background:var(--gray100);color:var(--gray700);border:1px solid var(--bdr);}.bs:active{background:var(--gray200);}
+.bd{background:var(--r50);color:var(--r500);border:1px solid var(--r200);}
+.bg-{background:var(--g50);color:var(--g600);border:1px solid var(--g200);}
+.bsm{padding:5px 9px;font-size:11px;}
+.bfull{width:100%;}
+.brow{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;}
+
+/* TABLE */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r);border:1px solid var(--bdr);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:var(--gray50);padding:7px 9px;text-align:left;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--bdr);}
+td{padding:8px 9px;border-bottom:1px solid var(--bdr);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--gray50);}
+
+/* PROGRESS */
+.pb{height:5px;background:var(--gray200);border-radius:3px;overflow:hidden;}
+.pf{height:100%;border-radius:3px;}
+
+/* ALERT ROW */
+.ar{display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:var(--r);margin-bottom:5px;font-size:12px;}
+.ar.ok{background:var(--g50);border:1px solid var(--g200);}
+.ar.warn{background:var(--a50);border:1px solid var(--a200);}
+.ar.bad{background:var(--r50);border:1px solid var(--r200);}
+.ar.info{background:var(--b50);border:1px solid var(--b200);}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.dot.ok{background:var(--g500);}
+.dot.warn{background:var(--a500);}
+.dot.bad{background:var(--r500);}
+.dot.info{background:var(--b500);}
+
+/* STAFF */
+.scard{display:flex;align-items:center;gap:11px;padding:11px;background:var(--gray50);border-radius:var(--r);border:1px solid var(--bdr);margin-bottom:7px;}
+.sav{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;}
+
+/* LOT CARD */
+.lot-card{border-left:3px solid var(--g400);padding:10px 12px;background:var(--gray50);border-radius:0 var(--r) var(--r) 0;margin-bottom:7px;}
+.lot-title{font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:space-between;}
+.lot-range{font-size:11px;color:var(--muted);margin-top:2px;}
+.lot-count{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--pri);}
+
+/* CHART */
+.cw{position:relative;width:100%;height:175px;margin:8px 0;}
+
+/* PROTO */
+.proto{border-left:3px solid var(--pri);padding:9px 11px;background:var(--gray50);border-radius:0 var(--r) var(--r) 0;margin-bottom:7px;}
+.proto-t{font-weight:600;font-size:12px;color:var(--pri);margin-bottom:3px;}
+.proto-b{font-size:11px;color:var(--muted);line-height:1.6;}
+
+/* INV CATEGORY TABS */
+.cat-tabs{display:flex;gap:4px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;}
+.ctab{padding:5px 10px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;cursor:pointer;border:1px solid var(--bdr);background:var(--gray50);color:var(--gray600);}
+.ctab.on{background:var(--pri);color:#fff;border-color:var(--pri);}
+
+/* MODALS */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center;}
+.mo.on{display:flex;}
+.mdl{background:var(--surf);border-radius:20px 20px 0 0;padding:18px 15px 30px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;}
+.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
+.mtitle{font-size:15px;font-weight:600;}
+.mclose{background:var(--gray100);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+
+/* AI BOX */
+.ai-box{background:var(--prib);border:1px solid var(--g200);border-radius:var(--rl);padding:13px;font-size:12px;line-height:1.75;white-space:pre-wrap;margin-top:9px;}
+
+/* REPORT OUTPUT */
+.rout{background:var(--gray50);border:1px solid var(--bdr);border-radius:var(--r);padding:13px;font-family:var(--mono);font-size:11px;line-height:1.7;white-space:pre-wrap;max-height:380px;overflow-y:auto;margin-top:9px;}
+
+/* PRINT */
+@media print{
+  .bottom-nav,.topbar,.btn,.brow,.cat-tabs,.mclose,.no-print{display:none!important;}
+  body{background:#fff;font-size:12pt;}
+  .app{max-width:100%;box-shadow:none;}
+  .content{padding:0;}
+  .pane{display:block!important;}
+  .print-only{display:block!important;}
+  .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;}
+}
+.print-only{display:none;}
+
+/* UTILS */
+.fb{display:flex;align-items:center;justify-content:space-between;}
+.fg8{display:flex;align-items:center;gap:8px;}
+.mt4{margin-top:4px;}.mt8{margin-top:8px;}.mt12{margin-top:12px;}.mt16{margin-top:16px;}
+.muted{color:var(--muted);font-size:12px;}
+.mono{font-family:var(--mono);}
+.bold{font-weight:600;}
+.hidden{display:none!important;}
+.empty{text-align:center;padding:24px 16px;color:var(--muted);font-size:13px;}
+.sr{display:flex;gap:7px;margin-bottom:9px;}
+.sr input{flex:1;}
+
+/* SPINNER */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--g200);border-top-color:var(--pri);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* TOAST */
+.toast{position:fixed;bottom:75px;left:50%;transform:translateX(-50%);background:var(--gray900);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;max-width:280px;text-align:center;}
+.toast.on{opacity:1;}
+
+/* SETTINGS */
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--bdr);}
+.setting-row:last-child{border-bottom:none;}
+.sl{font-size:13px;font-weight:500;}
+.sd{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* WEIGHING ALERT */
+.weigh-alert{background:var(--b50);border:1px solid var(--b200);border-radius:var(--r);padding:8px 11px;display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px;}
+.wa-icon{font-size:16px;}
+
+/* NEXT WEIGH */
+.nw-chip{display:inline-flex;align-items:center;gap:4px;background:var(--b50);border:1px solid var(--b200);border-radius:20px;padding:2px 8px;font-size:10px;color:var(--b600);font-weight:500;}
+.nw-chip.due{background:var(--r50);border-color:var(--r200);color:var(--r500);}
+.nw-chip.ok{background:var(--g50);border-color:var(--g200);color:var(--g600);}
+
+/* LOT MOVEMENT */
+.move-log{font-size:11px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--bdr);}
+.move-log:last-child{border-bottom:none;}
+
+@media(min-width:500px){.app{box-shadow:0 0 40px rgba(0,0,0,.12);}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-row1">
+    <div>
+      <div class="topbar-farm" id="tb-farm">Loading...</div>
+      <div class="topbar-sub" id="tb-sub">Farm Management System</div>
+    </div>
+    <div class="topbar-date" id="tb-date"></div>
+  </div>
+  <div class="topbar-stats">
+    <div class="ts-item"><strong id="ts-pop">–</strong>animals</div>
+    <div class="ts-item"><strong id="ts-ready">–</strong>ready</div>
+    <div class="ts-item"><strong id="ts-lots">–</strong>lots active</div>
+    <div class="ts-item"><strong id="ts-weigh">–</strong>due weigh</div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+<!-- DASHBOARD -->
+<div id="pane-dash" class="pane on">
+  <div class="mrow c4" style="gap:6px;">
+    <div class="mc ok"><div class="v" id="dk-ready">–</div><div class="l">sale ready</div></div>
+    <div class="mc warn"><div class="v" id="dk-watch">–</div><div class="l">lot 15 obs.</div></div>
+    <div class="mc bad"><div class="v" id="dk-low">–</div><div class="l">low stock</div></div>
+    <div class="mc info"><div class="v" id="dk-weigh">–</div><div class="l">weigh due</div></div>
+  </div>
+  <div class="sec">Weight distribution — 35 kg sale target</div>
+  <div class="card" style="padding:11px;"><div class="cw"><canvas id="dc" role="img" aria-label="Weight distribution">Distribution</canvas></div></div>
+  <div class="sec">Lot overview</div>
+  <div id="dash-lots"></div>
+  <div class="sec">Active alerts</div>
+  <div id="dash-alerts"></div>
+  <div class="sec">Weighing due (next 7 days)</div>
+  <div id="dash-weigh"></div>
+  <div class="sec">Feed stock</div>
+  <div id="dash-stock"></div>
+</div>
+
+<!-- ANIMALS -->
+<div id="pane-animals" class="pane">
+  <div class="fb" style="margin-bottom:9px;">
+    <div><div class="page-title">Animal register</div><div class="page-sub" id="animal-count">Loading...</div></div>
+    <button class="btn bp bsm" onclick="resetAddAnimalForm();OM('m-add-a')">+ Animal</button>
+  </div>
+  <div class="sr">
+    <input id="a-search" placeholder="Search tag, lot…" oninput="RA()">
+    <select id="a-lot-f" onchange="RA()" style="width:110px;">
+      <option value="">All lots</option>
+    </select>
+    <select id="a-status-f" onchange="RA()" style="width:100px;">
+      <option value="">All status</option>
+      <option value="active">Active</option>
+      <option value="watch">Obs.</option>
+      <option value="sold">Sold</option>
+    </select>
+  </div>
+  <div id="a-list"></div>
+</div>
+
+<!-- LOTS -->
+<div id="pane-lots" class="pane">
+  <div class="page-title">Lot management</div>
+  <div class="page-sub">15 lots · max 50 animals each · auto-sorted by weight</div>
+  <div class="mrow c3" style="gap:6px;">
+    <div class="mc"><div class="v" id="lk-full">–</div><div class="l">full lots</div></div>
+    <div class="mc ok"><div class="v" id="lk-moves">–</div><div class="l">moves today</div></div>
+    <div class="mc warn"><div class="v" id="lk-obs">–</div><div class="l">in lot 15</div></div>
+  </div>
+  <div class="sec">Lot breakdown</div>
+  <div id="lots-grid"></div>
+  <div class="sec">Recent lot movements</div>
+  <div id="move-log-list"></div>
+</div>
+
+<!-- HEALTH -->
+<div id="pane-health" class="pane">
+  <div class="mrow c3" style="gap:6px;">
+    <div class="mc bad"><div class="v" id="h-over">0</div><div class="l">overdue</div></div>
+    <div class="mc warn"><div class="v" id="h-due">0</div><div class="l">due 7 days</div></div>
+    <div class="mc ok"><div class="v" id="h-done">0</div><div class="l">completed</div></div>
+  </div>
+  <div class="fb" style="margin-bottom:8px;">
+    <div class="sec" style="margin:0;">Schedule</div>
+    <button class="btn bp bsm" onclick="OM('m-add-h')">+ Event</button>
+  </div>
+  <div class="sr">
+    <select id="hf-type" onchange="RH()" style="flex:1;"><option value="">All types</option><option>Deworming</option><option>Vaccination</option><option>Dipping / spraying</option><option>Veterinary check</option><option>Treatment</option><option>Vitamin supplement</option></select>
+    <select id="hf-st" onchange="RH()" style="width:110px;"><option value="">All</option><option value="overdue">Overdue</option><option value="due">Due soon</option><option value="upcoming">Upcoming</option><option value="done">Done</option></select>
+  </div>
+  <div id="h-list"></div>
+  <div class="sec" style="margin-top:14px;">Standard protocols</div>
+  <div class="proto"><div class="proto-t">Deworming rotation</div><div class="proto-b">Rotate every 4–6 weeks: Albendazole 10% → Levamisole HCl → Ivermectin. Dose strictly by body weight immediately after weighing. Never estimate — under-dosing drives anthelmintic resistance. Treat Lot 15 separately before reintroduction.</div></div>
+  <div class="proto"><div class="proto-t">Vaccination schedule</div><div class="proto-b">Entry: Clostridium perfringens D (pulpy kidney) + Pasteurellosis (Mannheimia haemolytica). Booster at 4 weeks. Annual boosters thereafter. Maintain cold chain 2–8°C. Record batch no. and expiry on every event card.</div></div>
+  <div class="proto"><div class="proto-t">Ectoparasite control</div><div class="proto-b">Amitraz (Triatix) every 6–8 weeks. Rotate annually with Cypermethrin. Weekly tick and lice checks during morning health rounds. Animals in Lot 15 must be treated before moving back to production lots.</div></div>
+</div>
+
+<!-- INVENTORY -->
+<!-- FEEDING PROGRAM -->
+<div id="pane-feed" class="pane">
+  <div class="page-title">Feeding program</div>
+  <div class="page-sub">Set ration per lot — saved as today's program and used in daily reports</div>
+
+  <div class="mrow c3" style="gap:6px;">
+    <div class="mc ok"><div class="v" id="fk-conc">0 kg</div><div class="l">concentrate today</div></div>
+    <div class="mc info"><div class="v" id="fk-silage">0 kg</div><div class="l">silage today</div></div>
+    <div class="mc"><div class="v" id="fk-hay">0 kg</div><div class="l">hay today</div></div>
+  </div>
+
+  <div class="sec">Ration settings — per lot</div>
+  <p class="muted" style="margin-bottom:10px;font-size:12px;">Set rates per animal per day. Totals are calculated automatically from the number of active animals in each lot.</p>
+  <div id="feed-ration-list"></div>
+
+  <div class="sec" style="margin-top:14px;">Feed status (palatability &amp; intake)</div>
+  <div class="card">
+    <div class="fr">
+      <div class="fg" style="margin:0;"><label>Overall flock condition</label>
+        <select id="feed-flock"><option value="Lively and in good health">Lively and in good health</option><option value="Fair condition">Fair condition</option><option value="Some signs of distress">Some signs of distress</option><option value="Poor — vet attention needed">Poor — vet attention needed</option></select>
+      </div>
+      <div class="fg" style="margin:0;"><label>Feed palatability</label>
+        <select id="feed-pal"><option value="excellent">Excellent — animals consuming readily</option><option value="good">Good</option><option value="fair">Fair — some reluctance observed</option><option value="poor">Poor — significant refusal</option></select>
+      </div>
+    </div>
+    <div class="fr mt8">
+      <div class="fg" style="margin:0;"><label>Water intake</label>
+        <select id="feed-water"><option value="optimal">Optimal across all lots</option><option value="good">Good</option><option value="reduced">Reduced — monitor closely</option><option value="very low">Very low — intervention needed</option></select>
+      </div>
+      <div class="fg" style="margin:0;"><label>Dung consistency</label>
+        <select id="feed-dung"><option value="Normal — stable digestive health">Normal — stable digestive health</option><option value="Slightly loose">Slightly loose</option><option value="Loose / scouring observed">Loose / scouring observed</option><option value="Very loose — urgent intervention">Very loose — urgent intervention</option></select>
+      </div>
+    </div>
+    <div class="fg mt8"><label>Feeding observations</label>
+      <textarea id="feed-obs" style="min-height:55px;" placeholder="e.g. Lot 9 animals slow to feed this morning, Lot 11 cleaned up all rations…"></textarea>
+    </div>
+    <button class="btn bp bfull mt8" onclick="saveFeedProgram()">Save today's feeding program</button>
+  </div>
+
+  <div class="sec">Feed ration summary</div>
+  <div id="feed-summary-table"></div>
+</div>
+
+<div id="pane-inv" class="pane">
+  <div class="mrow c3" style="gap:6px;">
+    <div class="mc bad"><div class="v" id="ik-low">0</div><div class="l">reorder now</div></div>
+    <div class="mc info"><div class="v" id="ik-days">–</div><div class="l">min feed days</div></div>
+    <div class="mc ok"><div class="v" id="ik-val">–</div><div class="l">stock value KES</div></div>
+  </div>
+  <div class="fb" style="margin-bottom:8px;">
+    <div class="sec" style="margin:0;">Stock register</div>
+    <button class="btn bp bsm" onclick="OM('m-add-i')">+ Item</button>
+  </div>
+  <div class="cat-tabs" id="inv-tabs"></div>
+  <div id="inv-list"></div>
+  <div class="sec" style="margin-top:14px;">Record consumption</div>
+  <div class="card">
+    <div class="fr"><div class="fg" style="margin:0;grid-column:1/-1;"><label>Item</label><select id="con-item"></select></div></div>
+    <div class="fr" style="margin-top:8px;">
+      <div class="fg" style="margin:0;"><label>Qty used</label><input type="number" id="con-qty" placeholder="Qty" step="0.1" min="0"></div>
+      <div class="fg" style="margin:0;"><label>Purpose</label><input id="con-by" placeholder="e.g. Morning feed"></div>
+    </div>
+    <button class="btn bp bfull mt8" onclick="RC()">Record use</button>
+  </div>
+</div>
+
+<!-- REPORTS -->
+<div id="pane-rep" class="pane">
+  <div class="page-title">Reports</div>
+  <div class="page-sub">Generate, print or export as PDF</div>
+  <div class="card">
+    <div class="fg"><label>Report type</label>
+      <select id="r-type">
+        <option value="daily">Daily feedlot report</option>
+        <option value="animals">Animal register (all animals)</option>
+        <option value="lot">Lot report (by lot)</option>
+        <option value="weigh">Weighing schedule & history</option>
+        <option value="health">Health & treatment log</option>
+        <option value="inventory">Inventory status & costs</option>
+        <option value="weekly">Weekly summary</option>
+        <option value="moves">Lot movement history</option>
+        <option value="sales">Animals sold report</option>
+      </select>
+    </div>
+    <div class="fr">
+      <div class="fg" style="margin:0;"><label>Date</label><input type="date" id="r-date"></div>
+      <div class="fg" style="margin:0;"><label>Prepared by</label><input id="r-by" placeholder="Your name"></div>
+    </div>
+    <div class="fg mt8"><label>Additional notes</label><textarea id="r-notes" placeholder="Any observations…"></textarea></div>
+    <div class="brow">
+      <button class="btn bp" onclick="GR('screen')">Generate</button>
+      <button class="btn bs" onclick="GR('pdf')">&#x2193; PDF</button>
+      <button class="btn bs" onclick="GR('print')">Print</button>
+    </div>
+  </div>
+  <div id="r-out" class="hidden">
+    <div class="rout" id="r-text"></div>
+    <div class="brow">
+      <button class="btn bs bsm" onclick="CP('r-text')">Copy text</button>
+      <button class="btn bs bsm" onclick="shareR()">Share</button>
+    </div>
+  </div>
+</div>
+
+<!-- MORE (Settings + AI) -->
+<div id="pane-more" class="pane">
+  <div class="page-title">Settings & Advisor</div>
+
+  <div class="sec">Farm profile</div>
+  <div class="card">
+    <div class="fg"><label>Farm name *</label><input id="set-name" placeholder="e.g. Kamau Feedlot Farm"></div>
+    <div class="fr">
+      <div class="fg" style="margin:0;"><label>Location</label><input id="set-loc" placeholder="e.g. Nakuru, Kenya"></div>
+      <div class="fg" style="margin:0;"><label>Owner / Manager</label><input id="set-owner" placeholder="Full name"></div>
+    </div>
+    <div class="fr mt8">
+      <div class="fg" style="margin:0;"><label>Phone</label><input id="set-phone" placeholder="0712 345 678"></div>
+      <div class="fg" style="margin:0;"><label>KRA PIN / Reg No.</label><input id="set-reg" placeholder="Optional"></div>
+    </div>
+    <div class="fr mt8">
+      <div class="fg" style="margin:0;"><label>Weighing interval (days)</label><input type="number" id="set-interval" value="14" min="1" max="30"></div>
+      <div class="fg" style="margin:0;"><label>Sale target weight (kg)</label><input type="number" id="set-target" value="35" min="1"></div>
+    </div>
+    <button class="btn bp bfull mt8" onclick="saveSettings()">Save farm profile</button>
+  </div>
+
+  <div class="sec">AI Farm advisor</div>
+  <div class="card">
+    <div class="fg"><label>Focus area</label>
+      <select id="ai-focus">
+        <option value="overall">Overall farm performance review</option>
+        <option value="nutrition">Nutrition & feeding optimisation</option>
+        <option value="health">Disease & health management</option>
+        <option value="growth">Growth performance & sale readiness</option>
+        <option value="mortality">Mortality reduction strategy</option>
+        <option value="profit">Profitability & cost management</option>
+        <option value="lots">Lot management & animal movement</option>
+      </select>
+    </div>
+    <div class="fg"><label>Specific concern today</label><input id="ai-concern" placeholder="e.g. 3 animals scouring in Lot 6"></div>
+    <button class="btn bp bfull" id="ai-btn" onclick="getAI()">Get professional recommendation</button>
+    <div id="ai-out" class="hidden ai-box"></div>
+    <div id="ai-cp" class="hidden brow"><button class="btn bs bsm" onclick="CP('ai-out')">Copy</button></div>
+  </div>
+
+  <div class="sec">Staff register</div>
+  <div class="fb" style="margin-bottom:8px;">
+    <span class="muted">Active farm team</span>
+    <button class="btn bp bsm" onclick="OM('m-add-s')">+ Staff</button>
+  </div>
+  <div id="staff-list"></div>
+
+  <div class="sec">Data management</div>
+  <div class="card">
+    <p class="muted" style="margin-bottom:9px;">Data saves automatically in this browser. Export regular backups.</p>
+    <div class="brow">
+      <button class="btn bs" onclick="exportData()">&#x2193; Export JSON backup</button>
+      <button class="btn bs" onclick="document.getElementById('imp').click()">&#x2191; Import backup</button>
+      <input type="file" id="imp" accept=".json" style="display:none" onchange="importData(this)">
+    </div>
+    <div style="margin-top:11px;padding-top:11px;border-top:1px solid var(--bdr);font-size:11px;color:var(--muted);font-family:var(--mono);">
+      Feedlot Farm Manager Pro v2.0<br>
+      Storage used: <span id="dsize">–</span> · Animals: <span id="dcount">–</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="ni on" data-p="dash" onclick="SP(this,'dash')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span>
+  </button>
+  <button class="ni" data-p="animals" onclick="SP(this,'animals')">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Animals</span>
+  </button>
+  <button class="ni" data-p="lots" onclick="SP(this,'lots')">
+    <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg><span>Lots</span>
+  </button>
+  <button class="ni" data-p="health" onclick="SP(this,'health')">
+    <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>Health</span>
+  </button>
+  <button class="ni" data-p="feed" onclick="SP(this,'feed')">
+    <svg viewBox="0 0 24 24"><path d="M3 3h18v4H3z"/><path d="M3 10h18v4H3z"/><path d="M3 17h18v4H3z"/></svg><span>Feed</span>
+  </button>
+  <button class="ni" data-p="inv" onclick="SP(this,'inv')">
+    <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg><span>Inventory</span>
+  </button>
+  <button class="ni" data-p="rep" onclick="SP(this,'rep')">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg><span>Reports</span>
+  </button>
+  <button class="ni" data-p="more" onclick="SP(this,'more')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg><span>More</span>
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- ADD / EDIT ANIMAL -->
+<div class="mo" id="m-add-a">
+  <div class="mdl">
+    <div class="mhdr"><div class="mtitle" id="m-add-a-title">Register animal</div><button class="mclose" onclick="CM('m-add-a')">&#x2715;</button></div>
+    <input type="hidden" id="a-edit-orig-tag">
+    <div class="fr"><div class="fg"><label>Tag ID *</label><input id="a-tag" placeholder="e.g. TAG-006"></div><div class="fg"><label>Breed</label><input id="a-breed" placeholder="e.g. Dorper"></div></div>
+    <div class="fr"><div class="fg"><label>Sex</label><select id="a-sex"><option>Ram</option><option>Ewe</option><option>Wether</option></select></div><div class="fg"><label>Colour / markings</label><input id="a-colour" placeholder="e.g. White, black head"></div></div>
+    <div class="fr"><div class="fg"><label>Date of birth (DOB)</label><input type="date" id="a-dob"></div><div class="fg"><label>Source / supplier</label><input id="a-source" placeholder="e.g. Kamau Farm, Nakuru"></div></div>
+    <div class="fr"><div class="fg"><label>Entry weight (kg)</label><input type="number" id="a-ewt" placeholder="kg" step="0.1" min="0"></div><div class="fg"><label>Entry date</label><input type="date" id="a-edate"></div></div>
+    <div class="fr"><div class="fg"><label>Purchase price (KES)</label><input type="number" id="a-price" placeholder="0" min="0" step="1"></div><div class="fg"><label>Status</label><select id="a-status"><option value="active">Active</option><option value="watch">Observation (Lot 15)</option></select></div></div>
+    <div class="fg"><label>Notes</label><textarea id="a-notes" style="min-height:40px;" placeholder="Any observations…"></textarea></div>
+    <div class="fg"><label>Weighing interval (days — leave blank for farm default)</label><input type="number" id="a-interval" placeholder="e.g. 14"></div>
+    <button class="btn bp bfull mt8" id="a-save-btn" onclick="saveAnimal()">Register animal</button>
+  </div>
+</div>
+
+<!-- SELL ANIMAL MODAL -->
+<div class="mo" id="m-sell">
+  <div class="mdl">
+    <div class="mhdr"><div class="mtitle">Record sale — <span id="sell-tag-label"></span></div><button class="mclose" onclick="CM('m-sell')">&#x2715;</button></div>
+    <input type="hidden" id="sell-tag">
+    <div class="fr"><div class="fg"><label>Sale date *</label><input type="date" id="sell-date"></div><div class="fg"><label>Sale weight (kg)</label><input type="number" id="sell-wt" placeholder="kg" step="0.1" min="0"></div></div>
+    <div class="fr"><div class="fg"><label>Sale price (KES) *</label><input type="number" id="sell-price" placeholder="e.g. 18000" min="0" step="1"></div><div class="fg"><label>Buyer name</label><input id="sell-buyer" placeholder="e.g. John Mwangi"></div></div>
+    <div class="fr"><div class="fg"><label>Buyer phone</label><input id="sell-phone" placeholder="0712 345 678"></div><div class="fg"><label>Sale lot (at time of sale)</label><input id="sell-lot" placeholder="e.g. Lot 11" readonly style="background:var(--gray100);"></div></div>
+    <div class="fg"><label>Notes</label><textarea id="sell-notes" style="min-height:40px;" placeholder="Any sale notes…"></textarea></div>
+    <button class="btn bp bfull mt8" onclick="confirmSale()">Confirm sale &amp; record</button>
+  </div>
+</div>
+
+<!-- WEIGHT RECORD -->
+<div class="mo" id="m-wt">
+  <div class="mdl">
+    <div class="mhdr"><div class="mtitle">Record weight — <span id="wt-tag"></span></div><button class="mclose" onclick="CM('m-wt')">&#x2715;</button></div>
+    <div class="fr"><div class="fg"><label>Date</label><input type="date" id="wf-date"></div><div class="fg"><label>Weight (kg) *</label><input type="number" id="wf-kg" placeholder="kg" step="0.1" min="0"></div></div>
+    <div class="fr"><div class="fg"><label>Recorded by</label><input id="wf-by" placeholder="Staff name"></div><div class="fg"><label>Condition</label><select id="wf-cond"><option value="">Normal</option><option value="good">Good</option><option value="fair">Fair</option><option value="poor">Poor — needs attention</option></select></div></div>
+    <div class="fg"><label>Notes</label><textarea id="wf-notes" style="min-height:45px;" placeholder="Feed response, observations…"></textarea></div>
+    <div id="lot-suggest" class="hidden" style="background:var(--b50);border:1px solid var(--b200);border-radius:var(--r);padding:10px;margin-bottom:8px;font-size:12px;"></div>
+    <button class="btn bp bfull" onclick="saveWeight()">Save & assign to lot</button>
+  </div>
+</div>
+
+<!-- ANIMAL DETAIL -->
+<div class="mo" id="m-detail">
+  <div class="mdl">
+    <div class="mhdr"><div class="mtitle" id="det-title">Animal detail</div><button class="mclose" onclick="CM('m-detail')">&#x2715;</button></div>
+    <div class="mrow" id="det-metrics"></div>
+    <div class="cw"><canvas id="det-chart" role="img" aria-label="Weight history">Weight history</canvas></div>
+    <div class="sec">Weight & monitoring history</div>
+    <div id="det-log"></div>
+    <div class="sec">Lot movement history</div>
+    <div id="det-moves"></div>
+    <div class="brow"><button class="btn bp bsm" id="det-wt-btn">+ Record weight</button><button class="btn bs bsm" onclick="CM('m-detail')">Close</button></div>
+  </div>
+</div>
+
+<!-- ADD HEALTH -->
+<div class="mo" id="m-add-h">
+  <div class="mdl">
+    <div class="mhdr"><div class="mtitle">Schedule health event</div><button class="mclose" onclick="CM('m-add-h')">&#x2715;</button></div>
+    <div class="fr"><div class="fg"><label>Type</label><select id="he-type"><option>Deworming</option><option>Vaccination</option><option>Vitamin supplement</option><option>Dipping / spraying</option><option>Veterinary check</option><option>Treatment</option></select></div><div class="fg"><label>Product / drug *</label><input id="he-drug" placeholder="e.g. Albendazole 10%"></div></div>
+    <div class="fr"><div class="fg"><label>Target group</label><select id="he-target"><option>All animals</option><option>Lot 1</option><option>Lot 2</option><option>Lot 3</option><option>Lot 4</option><option>Lot 5</option><option>Lot 6</option><option>Lot 7</option><option>Lot 8</option><option>Lot 9</option><option>Lot 10</option><option>Lot 11</option><option>Lot 12</option><option>Lot 13</option><option>Lot 14</option><option>Lot 15 (observation)</option><option>Underweight group</option></select></div><div class="fg"><label>Date</label><input type="date" id="he-date"></div></div>
+    <div class="fr"><div class="fg"><label>Dose</label><input id="he-dose" placeholder="e.g. 7.5 mg/kg BW"></div><div class="fg"><label>Route</label><select id="he-route"><option>Oral drench</option><option>Injection IM</option><option>Injection SC</option><option>Topical</option><option>In-feed</option></select></div></div>
+    <div class="fg"><label>Administered by</label><input id="he-by" placeholder="Vet or staff name"></div>
+    <div class="fg"><label>Notes</label><textarea id="he-notes" style="min-height:45px;" placeholder="Batch no., reactions…"></textarea></div>
+    <button class="btn bp bfull mt8" onclick="SHE()">Schedule event</button>
+  </div>
+</div>
+
+<!-- ADD INVENTORY -->
+<div class="mo" id="m-add-i">
+  <div class="mdl">
+    <div class="mhdr"><div class="mtitle">Add stock item</div><button class="mclose" onclick="CM('m-add-i')">&#x2715;</button></div>
+    <div class="fr"><div class="fg"><label>Item name *</label><input id="in-name" placeholder="e.g. Concentrate pellets"></div><div class="fg"><label>Category</label><select id="in-cat">
+      <optgroup label="Feed"><option>Feed — concentrate</option><option>Feed — silage</option><option>Feed — hay</option><option>Feed — mineral supplement</option></optgroup>
+      <optgroup label="Health"><option>Health — antiparasitic</option><option>Health — vaccine</option><option>Health — antibiotic</option><option>Health — vitamin</option><option>Health — disinfectant</option></optgroup>
+      <optgroup label="Machinery"><option>Machinery — fuel</option><option>Machinery — spare parts</option><option>Machinery — lubricants</option><option>Machinery — equipment</option></optgroup>
+      <optgroup label="Supplies"><option>Supplies — bedding</option><option>Supplies — tools</option><option>Supplies — PPE</option><option>Supplies — general</option></optgroup>
+    </select></div></div>
+    <div class="fr"><div class="fg"><label>Unit</label><select id="in-unit"><option>kg</option><option>litres</option><option>bags</option><option>bottles</option><option>pieces</option><option>rolls</option><option>doses</option></select></div><div class="fg"><label>Unit cost (KES)</label><input type="number" id="in-cost" placeholder="Cost per unit" step="0.01" min="0"></div></div>
+    <div class="fr"><div class="fg"><label>Stock in hand</label><input type="number" id="in-stock" placeholder="Current qty" step="0.1" min="0"></div><div class="fg"><label>Avg daily usage</label><input type="number" id="in-daily" placeholder="Per day (0=N/A)" step="0.1" min="0"></div></div>
+    <div class="fr"><div class="fg"><label>Reorder level</label><input type="number" id="in-reorder" placeholder="Min qty" min="0"></div><div class="fg"><label>Supplier</label><input id="in-supplier" placeholder="Supplier name"></div></div>
+    <button class="btn bp bfull mt8" onclick="SI()">Add to inventory</button>
+  </div>
+</div>
+
+<!-- ADD STAFF -->
+<div class="mo" id="m-add-s">
+  <div class="mdl">
+    <div class="mhdr"><div class="mtitle">Add staff member</div><button class="mclose" onclick="CM('m-add-s')">&#x2715;</button></div>
+    <div class="fr"><div class="fg"><label>Full name *</label><input id="sf-name" placeholder="e.g. James Kamau"></div><div class="fg"><label>Role</label><select id="sf-role"><option>Farm Manager</option><option>Animal Attendant</option><option>Veterinary Officer</option><option>Feed Technician</option><option>Security</option><option>Driver</option><option>Casual Labourer</option></select></div></div>
+    <div class="fr"><div class="fg"><label>Phone</label><input id="sf-phone" placeholder="0712 345 678"></div><div class="fg"><label>Status</label><select id="sf-st"><option value="active">Active</option><option value="leave">On leave</option><option value="inactive">Inactive</option></select></div></div>
+    <div class="fr"><div class="fg"><label>Assigned lots</label><input id="sf-lots" placeholder="e.g. Lot 1, Lot 2"></div><div class="fg"><label>Start date</label><input type="date" id="sf-start"></div></div>
+    <button class="btn bp bfull mt8" onclick="SS()">Add staff member</button>
+  </div>
+</div>
+
+</div><!-- /app -->
+<script>
+'use strict';
+// ============================================================
+// CONFIG & LOT SYSTEM
+// ============================================================
+var LOT_CONFIG = [
+  {num:1, label:'Lot 1', min:0, max:19.5, cap:50},
+  {num:2, label:'Lot 2', min:0, max:19.5, cap:50},
+  {num:3, label:'Lot 3', min:0, max:19.5, cap:50},
+  {num:4, label:'Lot 4', min:20, max:24.5, cap:50},
+  {num:5, label:'Lot 5', min:20, max:24.5, cap:50},
+  {num:6, label:'Lot 6', min:25, max:29.5, cap:50},
+  {num:7, label:'Lot 7', min:25, max:29.5, cap:50},
+  {num:8, label:'Lot 8', min:30, max:34.5, cap:50},
+  {num:9, label:'Lot 9', min:30, max:34.5, cap:50},
+  {num:10, label:'Lot 10', min:30, max:34.5, cap:50},
+  {num:11, label:'Lot 11', min:35, max:999, cap:50},
+  {num:12, label:'Lot 12', min:35, max:999, cap:50},
+  {num:13, label:'Lot 13', min:35, max:999, cap:50},
+  {num:14, label:'Lot 14', min:35, max:999, cap:50},
+  {num:15, label:'Lot 15 (Observation)', min:-1, max:999, cap:50, obs:true}
+];
+
+var KEY = 'ffm_pro_v2';
+var DB, SET, detChart=null, dshChart=null, curTag=null, moveLog=[];
+
+// ============================================================
+// STORAGE
+// ============================================================
+function load(){
+  try{ var r=localStorage.getItem(KEY); if(r) return JSON.parse(r); }catch(e){}
+  return defaults();
+}
+function save(){
+  localStorage.setItem(KEY, JSON.stringify({db:DB,set:SET,moves:moveLog}));
+  updInfo();
+}
+function defaults(){
+  SET={name:'My Feedlot Farm',location:'Nairobi, Kenya',owner:'Farm Manager',phone:'',reg:'',interval:14,target:35};
+  moveLog=[];
+  // Default rations per lot weight range (kg/animal/day)
+  var defaultRations={
+    1:{silage:0.5,concentrate:0.8,hay:0.4},
+    2:{silage:0.5,concentrate:0.8,hay:0.4},
+    3:{silage:0.5,concentrate:0.8,hay:0.4},
+    4:{silage:0.6,concentrate:1.0,hay:0.4},
+    5:{silage:0.6,concentrate:1.0,hay:0.4},
+    6:{silage:0.7,concentrate:1.3,hay:0.4},
+    7:{silage:0.7,concentrate:1.3,hay:0.4},
+    8:{silage:0.8,concentrate:1.6,hay:0.4},
+    9:{silage:0.8,concentrate:1.6,hay:0.4},
+    10:{silage:0.8,concentrate:1.6,hay:0.4},
+    11:{silage:0.9,concentrate:1.8,hay:0.4},
+    12:{silage:0.9,concentrate:1.8,hay:0.4},
+    13:{silage:0.9,concentrate:1.8,hay:0.4},
+    14:{silage:0.9,concentrate:1.8,hay:0.4},
+    15:{silage:0.5,concentrate:0.8,hay:0.4}
+  };
+  return {
+    animals:[
+      {tag:'TAG-001',lot:6,sex:'Ram',breed:'Dorper',entry:'2025-11-01',status:'active',notes:'Good grower',interval:null,
+       weights:[{date:'2025-11-01',wt:18.0,by:'James',cond:'',notes:''},{date:'2025-11-15',wt:20.2,by:'James',cond:'good',notes:''},{date:'2025-12-01',wt:22.8,by:'James',cond:'good',notes:''},{date:'2025-12-15',wt:25.1,by:'Mary',cond:'good',notes:''},{date:'2026-01-05',wt:27.6,by:'James',cond:'good',notes:''},{date:'2026-01-20',wt:29.8,by:'James',cond:'good',notes:''}]},
+      {tag:'TAG-002',lot:11,sex:'Wether',breed:'Dorper',entry:'2025-11-01',status:'active',notes:'Top performer',interval:null,
+       weights:[{date:'2025-11-01',wt:25.0,by:'James',cond:'',notes:''},{date:'2025-11-15',wt:27.5,by:'James',cond:'good',notes:''},{date:'2025-12-01',wt:30.2,by:'Mary',cond:'good',notes:''},{date:'2025-12-15',wt:32.9,by:'James',cond:'good',notes:''},{date:'2026-01-05',wt:35.1,by:'Mary',cond:'good',notes:'Ready for sale'},{date:'2026-01-20',wt:37.8,by:'James',cond:'good',notes:''}]},
+      {tag:'TAG-003',lot:15,sex:'Ram',breed:'Merino cross',entry:'2025-11-15',status:'watch',notes:'Weight loss — urgent vet review needed',interval:7,
+       weights:[{date:'2025-11-15',wt:11.0,by:'Mary',cond:'',notes:''},{date:'2025-12-01',wt:12.0,by:'James',cond:'fair',notes:''},{date:'2025-12-15',wt:11.5,by:'Mary',cond:'poor',notes:'Slight weight loss'},{date:'2026-01-05',wt:10.8,by:'James',cond:'poor',notes:'Continued loss — isolate'},{date:'2026-01-20',wt:11.0,by:'Mary',cond:'fair',notes:'Slight improvement'}]},
+      {tag:'TAG-004',lot:6,sex:'Ewe',breed:'Dorper',entry:'2025-11-01',status:'active',notes:'',interval:null,
+       weights:[{date:'2025-11-01',wt:22.0,by:'James',cond:'',notes:''},{date:'2025-11-15',wt:24.1,by:'Mary',cond:'good',notes:''},{date:'2025-12-01',wt:26.5,by:'James',cond:'good',notes:''},{date:'2026-01-20',wt:29.2,by:'James',cond:'good',notes:''}]},
+      {tag:'TAG-005',lot:11,sex:'Wether',breed:'Dorper cross',entry:'2025-10-20',status:'active',notes:'',interval:null,
+       weights:[{date:'2025-10-20',wt:28.0,by:'James',cond:'',notes:''},{date:'2025-11-05',wt:30.5,by:'Mary',cond:'good',notes:''},{date:'2025-11-20',wt:33.2,by:'James',cond:'good',notes:''},{date:'2025-12-10',wt:35.8,by:'Mary',cond:'good',notes:''},{date:'2026-01-20',wt:38.0,by:'James',cond:'good',notes:''}]},
+    ],
+    staff:[
+      {name:'James Kamau',role:'Farm Manager',phone:'0712 345 678',start:'2024-01-15',status:'active',lots:'All lots'},
+      {name:'Mary Njoroge',role:'Animal Attendant',phone:'0723 456 789',start:'2024-03-01',status:'active',lots:'Lot 1–5'},
+      {name:'Peter Ochieng',role:'Feed Technician',phone:'0734 567 890',start:'2024-06-10',status:'active',lots:'Lot 6–10'},
+      {name:'Dr. Amos Weru',role:'Veterinary Officer',phone:'0756 789 012',start:'2024-01-15',status:'active',lots:'All lots'},
+    ],
+    health:[
+      {type:'Deworming',drug:'Albendazole 10%',target:'All animals',date:'2026-04-14',dose:'7.5 mg/kg BW',route:'Oral drench',by:'Dr. Amos Weru',status:'done',notes:'All animals treated. No adverse reactions.'},
+      {type:'Vaccination',drug:'Multivax P — primary',target:'All animals',date:'2026-04-01',dose:'2 ml SC',route:'Injection SC',by:'Dr. Amos Weru',status:'done',notes:'Primary vaccination complete.'},
+      {type:'Vaccination',drug:'Multivax P — booster',target:'All animals',date:'2026-04-29',dose:'2 ml SC',route:'Injection SC',by:'Dr. Amos Weru',status:'upcoming',notes:'Booster 4 weeks after primary.'},
+      {type:'Deworming',drug:'Levamisole HCl',target:'All animals',date:'2026-05-26',dose:'7.5 mg/kg BW',route:'Oral drench',by:'James Kamau',status:'upcoming',notes:'Rotational — 6 weeks after Albendazole.'},
+      {type:'Dipping / spraying',drug:'Triatix (Amitraz)',target:'All animals',date:'2026-05-20',dose:'2 ml/litre',route:'Topical',by:'Peter Ochieng',status:'upcoming',notes:'Bi-monthly ectoparasite control.'},
+      {type:'Veterinary check',drug:'Health assessment',target:'Lot 15 (observation)',date:'2026-05-10',dose:'N/A',route:'N/A',by:'Dr. Amos Weru',status:'upcoming',notes:'Focus on TAG-003 and all underperformers.'},
+    ],
+    inventory:[
+      {name:'Concentrate pellets',cat:'Feed — concentrate',unit:'kg',stock:1850,daily:210,reorder:500,cost:45,supplier:'Unga Group'},
+      {name:'Maize silage',cat:'Feed — silage',unit:'kg',stock:3200,daily:103,reorder:800,cost:8,supplier:'Local farmer'},
+      {name:'Rhodes grass hay',cat:'Feed — hay',unit:'kg',stock:620,daily:61,reorder:300,cost:12,supplier:'Nakuru supplier'},
+      {name:'Mineral lick blocks',cat:'Feed — mineral supplement',unit:'pieces',stock:12,daily:0,reorder:6,cost:350,supplier:'Unga Group'},
+      {name:'Albendazole 10%',cat:'Health — antiparasitic',unit:'litres',stock:4.5,daily:0,reorder:2,cost:1200,supplier:'Meru Agro-Vet'},
+      {name:'Levamisole HCl',cat:'Health — antiparasitic',unit:'litres',stock:3.0,daily:0,reorder:2,cost:950,supplier:'Meru Agro-Vet'},
+      {name:'Multivax P vaccine',cat:'Health — vaccine',unit:'bottles',stock:8,daily:0,reorder:5,cost:2800,supplier:'Coopers Kenya'},
+      {name:'Triatix (Amitraz)',cat:'Health — disinfectant',unit:'litres',stock:1.2,daily:0,reorder:2,cost:1800,supplier:'Coopers Kenya'},
+      {name:'Diesel fuel',cat:'Machinery — fuel',unit:'litres',stock:180,daily:5,reorder:50,cost:205,supplier:'Total Kenya'},
+      {name:'Engine oil',cat:'Machinery — lubricants',unit:'litres',stock:8,daily:0,reorder:4,cost:600,supplier:'Total Kenya'},
+      {name:'Feedlot overalls',cat:'Supplies — PPE',unit:'pieces',stock:6,daily:0,reorder:2,cost:1500,supplier:'Local supplier'},
+      {name:'Disinfectant (Virkon)',cat:'Health — disinfectant',unit:'kg',stock:3,daily:0,reorder:1,cost:2200,supplier:'Coopers Kenya'},
+    ],
+    feedProgram:{rations:defaultRations,palatability:'excellent',water:'optimal',observations:'',lastSaved:''}
+  };
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function cw(a){return a.weights&&a.weights.length?a.weights[a.weights.length-1].wt:0;}
+function adg(a){
+  if(!a.weights||a.weights.length<2) return null;
+  var f=a.weights[0],l=a.weights[a.weights.length-1];
+  var d=(new Date(l.date)-new Date(f.date))/86400000;
+  return d>0?(l.wt-f.wt)/d:null;
+}
+function getTarget(){return SET&&SET.target?SET.target:35;}
+function dtm(a){var g=adg(a),w=cw(a),T=getTarget();if(w>=T)return 0;if(!g||g<=0)return null;return Math.ceil((T-w)/g);}
+function nextWeigh(a){
+  if(!a.weights||!a.weights.length) return null;
+  var last=a.weights[a.weights.length-1].date;
+  var iv=a.interval||(SET&&SET.interval?SET.interval:14);
+  var d=new Date(last+'T00:00:00');
+  d.setDate(d.getDate()+iv);
+  return d.toISOString().split('T')[0];
+}
+function daysUntilWeigh(a){
+  var n=nextWeigh(a); if(!n) return null;
+  var diff=(new Date(n+'T00:00:00')-new Date())/86400000;
+  return Math.ceil(diff);
+}
+function fd(s){if(!s)return '–';try{return new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}catch(e){return s;}}
+function today(){return new Date().toISOString().split('T')[0];}
+function N2(n){return typeof n==='number'?n.toFixed(2):n;}
+function fmt(n){return typeof n==='number'?n.toLocaleString('en-KE'):'–';}
+
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(function(){t.classList.remove('on');},2500);}
+function OM(id){document.getElementById(id).classList.add('on');}
+function CM(id){document.getElementById(id).classList.remove('on');}
+
+function SP(btn,id){
+  document.querySelectorAll('.ni').forEach(function(b){b.classList.remove('on');});
+  document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('on');});
+  btn.classList.add('on');
+  document.getElementById('pane-'+id).classList.add('on');
+  if(id==='dash')RD();
+  else if(id==='animals')RA();
+  else if(id==='lots')RL();
+  else if(id==='health')RH();
+  else if(id==='feed')RF();
+  else if(id==='inv')RI();
+  else if(id==='rep'){}
+  else if(id==='more'){RS();loadSettings();}
+}
+
+function CP(id){
+  var el=document.getElementById(id);
+  var text=el.innerText||el.textContent;
+  if(navigator.clipboard){navigator.clipboard.writeText(text).then(function(){toast('Copied to clipboard');});}
+  else{var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('Copied!');}
+}
+
+function updInfo(){
+  var s=JSON.stringify({db:DB,set:SET,moves:moveLog}).length;
+  var el=document.getElementById('dsize');if(el)el.textContent=s>1024?(s/1024).toFixed(1)+' KB':s+' B';
+  var dc=document.getElementById('dcount');if(dc)dc.textContent=DB.animals?DB.animals.length:'0';
+}
+
+// ============================================================
+// LOT ASSIGNMENT
+// ============================================================
+function getLotForWeight(wt){
+  // Lot 15 is manual (observation) only
+  // Find the right weight range, then the first lot with space
+  for(var i=0;i<14;i++){
+    var lc=LOT_CONFIG[i];
+    if(wt>=lc.min&&wt<=lc.max){
+      // Check if this lot has space
+      var count=DB.animals.filter(function(a){return a.lot===lc.num&&a.status!=='sold';}).length;
+      if(count<lc.cap) return lc.num;
+    }
+  }
+  // All matching lots full — find any lot with space in range
+  for(var i=0;i<14;i++){
+    var lc=LOT_CONFIG[i];
+    if(wt>=lc.min&&wt<=lc.max){
+      return lc.num; // assign even if full, cap warning will show
+    }
+  }
+  return 1;
+}
+
+function assignLot(animal, newWt){
+  if(animal.status==='watch') return animal.lot; // Lot 15 animals stay in 15
+  var suggested=getLotForWeight(newWt);
+  var old=animal.lot;
+  if(suggested!==old){
+    moveLog.unshift({tag:animal.tag,from:old,to:suggested,date:today(),wt:newWt,reason:'Auto — weight '+(newWt).toFixed(1)+' kg'});
+    if(moveLog.length>200) moveLog.pop();
+  }
+  return suggested;
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function RD(){
+  var act=DB.animals.filter(function(a){return a.status!=='sold';});
+  var T=getTarget();
+  var ready=act.filter(function(a){return cw(a)>=T;});
+  var obs=act.filter(function(a){return a.lot===15||a.status==='watch';});
+  var low=DB.inventory.filter(function(i){return i.reorder>0&&i.stock<=i.reorder;});
+  var tnow=new Date();
+  var weighDue=act.filter(function(a){var d=daysUntilWeigh(a);return d!==null&&d<=7;});
+
+  // topbar
+  document.getElementById('tb-farm').textContent=SET.name||'My Farm';
+  document.getElementById('tb-sub').textContent=(SET.owner||'Farm Manager')+' · '+SET.location;
+  document.getElementById('tb-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  document.getElementById('ts-pop').textContent=act.length;
+  document.getElementById('ts-ready').textContent=ready.length;
+  var activeLots=new Set(act.filter(function(a){return a.lot!==15;}).map(function(a){return a.lot;})).size;
+  document.getElementById('ts-lots').textContent=activeLots;
+  document.getElementById('ts-weigh').textContent=weighDue.length;
+
+  document.getElementById('dk-ready').textContent=ready.length;
+  document.getElementById('dk-watch').textContent=obs.length;
+  document.getElementById('dk-low').textContent=low.length;
+  document.getElementById('dk-weigh').textContent=weighDue.length;
+
+  // chart
+  var cats=['<20 kg','20–24','25–29','30–34','≥'+T+' kg'];
+  var cnts=[
+    act.filter(function(a){return cw(a)<20;}).length,
+    act.filter(function(a){return cw(a)>=20&&cw(a)<25;}).length,
+    act.filter(function(a){return cw(a)>=25&&cw(a)<30;}).length,
+    act.filter(function(a){return cw(a)>=30&&cw(a)<T;}).length,
+    act.filter(function(a){return cw(a)>=T;}).length,
+  ];
+  if(dshChart) dshChart.destroy();
+  var ctx=document.getElementById('dc').getContext('2d');
+  dshChart=new Chart(ctx,{type:'bar',data:{labels:cats,datasets:[{label:'Animals',data:cnts,backgroundColor:['#dc2626','#d4920a','#3b82f6','#2d7024','#1f5219'],borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{stepSize:1,font:{size:10}}}}}});
+
+  // lot overview (top 5 by animal count)
+  var lotSummary=LOT_CONFIG.map(function(lc){
+    var animals=act.filter(function(a){return a.lot===lc.num;});
+    return {lc:lc,count:animals.length,weights:animals.map(function(a){return cw(a);})};
+  }).filter(function(l){return l.count>0;}).sort(function(a,b){return b.count-a.count;}).slice(0,6);
+  var dl=document.getElementById('dash-lots');
+  dl.innerHTML=lotSummary.map(function(l){
+    var pct=Math.min(100,Math.round(l.count/l.lc.cap*100));
+    var col=pct>=100?'#dc2626':pct>=80?'#d4920a':'#2d7024';
+    var range=l.lc.obs?'Observation':l.lc.min+' – '+(l.lc.max===999?'∞':l.lc.max)+' kg';
+    return '<div class="cf fb" style="gap:10px;"><div style="flex:1;"><div style="font-size:13px;font-weight:500;">'+l.lc.label+'</div><div class="muted" style="font-size:10px;">'+range+'</div></div><div style="text-align:right;min-width:60px;"><div style="font-size:16px;font-weight:600;font-family:var(--mono);color:'+col+';">'+l.count+'<span style="font-size:10px;font-weight:400;color:var(--muted);">/'+l.lc.cap+'</span></div></div></div>';
+  }).join('')||'<div class="empty">No animals in any lot</div>';
+
+  // alerts
+  var alerts=[];
+  obs.filter(function(a){return a.lot===15||a.status==='watch';}).forEach(function(a){alerts.push({cls:'warn',msg:a.tag+' — under observation (Lot 15). Weight: '+cw(a).toFixed(1)+' kg. '+(a.notes||'')});});
+  ready.forEach(function(a){alerts.push({cls:'ok',msg:a.tag+' reached '+cw(a).toFixed(1)+' kg — ready for sale (Lot '+a.lot+').'});});
+  low.forEach(function(i){alerts.push({cls:'bad',msg:'Low stock: '+i.name+' — '+i.stock+' '+i.unit+' (reorder at '+i.reorder+')'});});
+  var al=document.getElementById('dash-alerts');
+  al.innerHTML=alerts.length?alerts.map(function(a){return '<div class="ar '+a.cls+'"><div class="dot '+a.cls+'"></div><div>'+a.msg+'</div></div>';}).join(''):'<div class="empty" style="padding:12px;">No active alerts</div>';
+
+  // weighing due
+  var wd=document.getElementById('dash-weigh');
+  wd.innerHTML=weighDue.length?weighDue.map(function(a){var d=daysUntilWeigh(a);return '<div class="weigh-alert"><div class="wa-icon">⚖️</div><div style="flex:1;"><strong>'+a.tag+'</strong> (Lot '+a.lot+') — last: '+fd(a.weights[a.weights.length-1].date)+'</div><span class="bdg '+(d<=0?'bad':'warn')+'">'+( d<=0?'Overdue':d+' days')+'</span></div>';}).join(''):'<div class="empty" style="padding:10px;">No animals due for weighing this week</div>';
+
+  // stock
+  var feed=DB.inventory.filter(function(i){return i.cat.startsWith('Feed');});
+  var ds=document.getElementById('dash-stock');
+  ds.innerHTML=feed.map(function(i){var days=i.daily>0?Math.floor(i.stock/i.daily):null;var isLow=i.reorder>0&&i.stock<=i.reorder;var pct=i.reorder>0?Math.min(100,Math.round(i.stock/(i.reorder*3)*100)):60;var col=isLow?'#dc2626':pct<40?'#d4920a':'#2d7024';return '<div class="cf" style="padding:9px;"><div class="fb" style="margin-bottom:5px;"><span style="font-size:12px;font-weight:500;">'+i.name+'</span><span class="mono" style="font-size:11px;">'+i.stock+' '+i.unit+(days!==null?' · '+days+'d':'')+'</span></div><div class="pb"><div class="pf" style="width:'+pct+'%;background:'+col+';"></div></div></div>';}).join('');
+}
+
+// ============================================================
+// ANIMALS
+// ============================================================
+function populateLotFilter(){
+  var sel=document.getElementById('a-lot-f');
+  var val=sel?sel.value:'';
+  if(sel){sel.innerHTML='<option value="">All lots</option>'+LOT_CONFIG.map(function(lc){return '<option value="'+lc.num+'">'+lc.label+'</option>';}).join('');}
+  if(val&&sel) sel.value=val;
+}
+
+function RA(){
+  populateLotFilter();
+  var search=(document.getElementById('a-search').value||'').toLowerCase();
+  var lotF=document.getElementById('a-lot-f').value;
+  var stF=document.getElementById('a-status-f').value;
+  var list=DB.animals.filter(function(a){
+    return (a.tag.toLowerCase().includes(search)||('lot '+a.lot).includes(search)||
+            (a.breed||'').toLowerCase().includes(search))&&
+      (!lotF||a.lot==lotF)&&(!stF||a.status===stF);
+  });
+  var T=getTarget();
+  var act=list.filter(function(a){return a.status!=='sold';});
+  document.getElementById('animal-count').textContent=list.length+' animals shown · '+act.filter(function(a){return cw(a)>=T;}).length+' ready for sale · '+DB.animals.filter(function(a){return a.status==='sold';}).length+' sold';
+  var el=document.getElementById('a-list');
+  if(!list.length){el.innerHTML='<div class="empty">No animals found</div>';return;}
+  el.innerHTML=list.map(function(a){
+    var w=cw(a),g=adg(a),d=dtm(a),dw=daysUntilWeigh(a);
+    var pct=Math.min(100,Math.round(w/T*100));
+    var col=w>=T?'#1f5219':w>=25?'#2d7024':w>=20?'#d4920a':'#dc2626';
+    var sb=a.status==='active'?'ok':a.status==='watch'?'warn':a.status==='sold'?'gray':'gray';
+    var dlabel=d===0?'<span class="bdg ok">Ready</span>':d!==null?d+'d':'–';
+    var nwchip='';
+    if(a.status==='active'&&a.weights&&a.weights.length){
+      var nwcls=dw===null?'':dw<=0?'due':'ok';
+      nwchip='<span class="nw-chip '+nwcls+'">'+
+        (dw===null?'No schedule':dw<=0?'Weigh now!':'Weigh in '+dw+'d')+'</span>';
+    }
+    var ageDays=a.dob?Math.floor((new Date()-new Date(a.dob+'T00:00:00'))/86400000):null;
+    var ageStr=ageDays!==null?(ageDays>=365?Math.floor(ageDays/365)+'y '+(Math.floor((ageDays%365)/30))+'m':Math.floor(ageDays/30)+'m'):'–';
+    var isSold=a.status==='sold';
+    return '<div class="card" style="padding:11px;margin-bottom:8px;'+(isSold?'opacity:.7;':'')+'">' +
+      '<div class="fb" style="margin-bottom:6px;">' +
+        '<div><div style="font-size:14px;font-weight:600;">'+a.tag+'</div>' +
+        '<div class="muted" style="font-size:11px;">Lot '+a.lot+' · '+a.breed+' / '+a.sex+(a.colour?' · '+a.colour:'')+' · Age: '+ageStr+'</div></div>' +
+        '<div style="text-align:right;">' +
+          '<span class="bdg '+sb+'">'+a.status+'</span>' +
+          (nwchip?'<br><span style="font-size:10px;">'+nwchip+'</span>':'') +
+        '</div>' +
+      '</div>' +
+      (!isSold?
+        '<div class="fb" style="margin-bottom:5px;">' +
+          '<span style="font-size:19px;font-weight:600;font-family:var(--mono);">'+w.toFixed(1)+' kg</span>' +
+          '<span class="muted" style="font-size:11px;">'+(g!==null?Math.round(g*1000)+' g/day ADG':'–')+' &nbsp;To target: '+dlabel+'</span>' +
+        '</div>' +
+        '<div class="pb" style="margin-bottom:4px;"><div class="pf" style="width:'+pct+'%;background:'+col+';"></div></div>' +
+        '<div class="fb"><span class="muted" style="font-size:10px;">'+pct+'% to '+T+' kg</span><span class="muted" style="font-size:10px;">Next: '+fd(nextWeigh(a))+'</span></div>'
+        :
+        '<div class="muted" style="font-size:12px;">Sold: '+fd(a.saleDate)+' · KES '+(a.salePrice||(0)).toLocaleString('en-KE')+(a.buyer?' · '+a.buyer:'')+'</div>'
+      )+
+      '<div class="brow" style="margin-top:8px;">' +
+        '<button class="btn bs bsm" onclick="viewAnimal(\''+a.tag+'\')">View</button>' +
+        '<button class="btn bs bsm" onclick="editAnimal(\''+a.tag+'\')">Edit</button>' +
+        (!isSold?'<button class="btn bp bsm" onclick="openWt(\''+a.tag+'\')">+ Weight</button>':'') +
+        (!isSold&&a.status==='active'&&w>=T?'<button class="btn bg- bsm" onclick="openSell(\''+a.tag+'\')">Sell</button>':'') +
+        (!isSold&&a.status==='active'&&w<T?'<button class="btn bg- bsm" onclick="openSell(\''+a.tag+'\')">Sell</button>':'') +
+        (!isSold&&a.status!=='watch'?'<button class="btn bsm" style="background:var(--r50);color:var(--r500);border:1px solid var(--r200);" onclick="moveLot15(\''+a.tag+'\')">→ L15</button>':'') +
+        '<button class="btn bsm bd" onclick="deleteAnimal(\''+a.tag+'\')">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function openWt(tag){
+  curTag=tag;
+  document.getElementById('wt-tag').textContent=tag;
+  document.getElementById('wf-date').value=today();
+  document.getElementById('wf-kg').value='';
+  document.getElementById('wf-by').value='';
+  document.getElementById('wf-cond').value='';
+  document.getElementById('wf-notes').value='';
+  document.getElementById('lot-suggest').classList.add('hidden');
+  OM('m-wt');
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  var kgInput=document.getElementById('wf-kg');
+  if(kgInput){
+    kgInput.addEventListener('input',function(){
+      var wt=parseFloat(this.value);
+      if(!isNaN(wt)&&wt>0){
+        var suggested=getLotForWeight(wt);
+        var a=DB.animals.find(function(x){return x.tag===curTag;});
+        var currentLot=a?a.lot:null;
+        var ls=document.getElementById('lot-suggest');
+        var lconf=LOT_CONFIG.find(function(l){return l.num===suggested;});
+        var cnt=DB.animals.filter(function(x){return x.lot===suggested&&x.status!=='sold';}).length;
+        ls.innerHTML='&#9432; At '+wt.toFixed(1)+' kg → assigned to <strong>'+lconf.label+'</strong> ('+cnt+'/'+lconf.cap+' animals)'+(currentLot&&currentLot!==suggested?' &nbsp;·&nbsp; <em>Move from Lot '+currentLot+'</em>':'');
+        ls.classList.remove('hidden');
+      }else{
+        document.getElementById('lot-suggest').classList.add('hidden');
+      }
+    });
+  }
+});
+
+function saveWeight(){
+  var a=DB.animals.find(function(x){return x.tag===curTag;});
+  if(!a){toast('Animal not found');return;}
+  var wt=parseFloat(document.getElementById('wf-kg').value);
+  if(!wt||wt<=0){toast('Enter a valid weight');return;}
+  a.weights.push({date:document.getElementById('wf-date').value,wt:wt,by:document.getElementById('wf-by').value,cond:document.getElementById('wf-cond').value,notes:document.getElementById('wf-notes').value});
+  // Auto-assign lot
+  var newLot=assignLot(a,wt);
+  a.lot=newLot;
+  save(); CM('m-wt');
+  toast('Weight saved · assigned to Lot '+newLot);
+  RA(); RD();
+  if(document.getElementById('m-detail').classList.contains('on')) viewAnimal(curTag);
+}
+
+function viewAnimal(tag){
+  var a=DB.animals.find(function(x){return x.tag===tag;});
+  if(!a)return;
+  curTag=tag;
+  var T=getTarget();
+  var w=cw(a),g=adg(a),d=dtm(a),pct=Math.min(100,Math.round(w/T*100));
+  var ageDays=a.dob?Math.floor((new Date()-new Date(a.dob+'T00:00:00'))/86400000):null;
+  var ageStr=ageDays!==null?(ageDays>=365?Math.floor(ageDays/365)+'yr '+(Math.floor((ageDays%365)/30))+'mo':Math.floor(ageDays/30)+' months'):'–';
+  document.getElementById('det-title').textContent=a.tag+' — '+a.breed;
+  document.getElementById('det-metrics').innerHTML=
+    '<div class="mc"><div class="v">'+w.toFixed(1)+' kg</div><div class="l">current weight</div></div>'+
+    '<div class="mc '+(g!==null&&g*1000>=200?'ok':'warn')+'"><div class="v">'+(g!==null?Math.round(g*1000)+' g':'–')+'</div><div class="l">daily gain</div></div>'+
+    '<div class="mc '+(d===0?'ok':d&&d<20?'warn':'')+'"><div class="v">'+(d===0?'Ready':d!==null?d+'d':'–')+'</div><div class="l">days to target</div></div>'+
+    '<div class="mc info"><div class="v">'+fd(nextWeigh(a))+'</div><div class="l">next weigh</div></div>';
+  // Animal profile info
+  var profile='<div class="cf" style="font-size:12px;margin-bottom:8px;">'+
+    '<div class="fb" style="margin-bottom:4px;"><span class="muted">Tag</span><strong>'+a.tag+'</strong></div>'+
+    '<div class="fb" style="margin-bottom:4px;"><span class="muted">Breed / Sex</span><span>'+a.breed+' / '+a.sex+'</span></div>'+
+    (a.colour?'<div class="fb" style="margin-bottom:4px;"><span class="muted">Colour</span><span>'+a.colour+'</span></div>':'')+
+    '<div class="fb" style="margin-bottom:4px;"><span class="muted">DOB</span><span>'+fd(a.dob)+'</span></div>'+
+    '<div class="fb" style="margin-bottom:4px;"><span class="muted">Age</span><span>'+ageStr+'</span></div>'+
+    '<div class="fb" style="margin-bottom:4px;"><span class="muted">Entry date</span><span>'+fd(a.entry)+'</span></div>'+
+    (a.source?'<div class="fb" style="margin-bottom:4px;"><span class="muted">Source</span><span>'+a.source+'</span></div>':'')+
+    (a.purchasePrice?'<div class="fb" style="margin-bottom:4px;"><span class="muted">Purchase price</span><span>KES '+a.purchasePrice.toLocaleString('en-KE')+'</span></div>':'')+
+    '<div class="fb" style="margin-bottom:4px;"><span class="muted">Current lot</span><span>Lot '+a.lot+'</span></div>'+
+    '<div class="fb"><span class="muted">Status</span><span class="bdg '+(a.status==='active'?'ok':a.status==='watch'?'warn':'gray')+'">'+a.status+'</span></div>'+
+    (a.status==='sold'?'<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bdr);"><div class="muted" style="margin-bottom:4px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Sale details</div>'+
+      '<div class="fb" style="margin-bottom:4px;"><span class="muted">Sale date</span><span>'+fd(a.saleDate)+'</span></div>'+
+      '<div class="fb" style="margin-bottom:4px;"><span class="muted">Sale weight</span><span>'+(a.saleWeight||w).toFixed(1)+' kg</span></div>'+
+      '<div class="fb" style="margin-bottom:4px;"><span class="muted">Sale price</span><strong>KES '+(a.salePrice||0).toLocaleString('en-KE')+'</strong></div>'+
+      (a.purchasePrice?'<div class="fb" style="margin-bottom:4px;"><span class="muted">Gross profit</span><span class="bdg '+(a.salePrice-a.purchasePrice>=0?'ok':'bad')+'">KES '+((a.salePrice||0)-(a.purchasePrice||0)).toLocaleString('en-KE')+'</span></div>':'')+
+      '<div class="fb" style="margin-bottom:4px;"><span class="muted">Sold from</span><span>'+a.soldFromLotLabel+'</span></div>'+
+      (a.buyer?'<div class="fb" style="margin-bottom:4px;"><span class="muted">Buyer</span><span>'+a.buyer+(a.buyerPhone?' · '+a.buyerPhone:'')+'</span></div>':'')+
+      (a.saleNotes?'<div class="muted" style="margin-top:4px;">'+a.saleNotes+'</div>':'')+
+    '</div>':'')+(a.notes?'<div class="muted" style="margin-top:6px;font-size:11px;">Notes: '+a.notes+'</div>':'')+
+    '</div>';
+  // Weight log
+  var weightLog='<div class="tw"><table><thead><tr><th>Date</th><th>Weight</th><th>Change</th><th>Condition</th><th>By</th><th>Notes</th></tr></thead><tbody>'+
+    a.weights.map(function(wt,i){
+      var gain=i>0?(wt.wt-a.weights[i-1].wt).toFixed(1):null;
+      var gc=gain!==null?(parseFloat(gain)>0?'ok':parseFloat(gain)<0?'bad':'gray'):'';
+      var isLast=i===a.weights.length-1;
+      return '<tr><td>'+fd(wt.date)+'</td><td class="bold mono">'+wt.wt.toFixed(1)+' kg</td>'+
+        '<td>'+(gain!==null?'<span class="bdg '+gc+'">'+(parseFloat(gain)>0?'+':'')+gain+' kg</span>':'–')+'</td>'+
+        '<td>'+(wt.cond||'–')+'</td><td>'+(wt.by||'–')+'</td>'+
+        '<td style="font-size:10px;color:var(--muted);">'+(wt.notes||'–')+(isLast&&a.status!=='sold'?' <span class="nw-chip '+(daysUntilWeigh(a)<=0?'due':'ok')+'">Next: '+fd(nextWeigh(a))+'</span>':'')+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+  // Lot movements
+  var myMoves=moveLog.filter(function(m){return m.tag===tag;});
+  var movesHtml=myMoves.length?myMoves.map(function(m){return '<div class="move-log">'+fd(m.date)+' — Lot '+m.from+' → Lot '+m.to+' · '+m.wt.toFixed(1)+' kg · '+m.reason+'</div>';}).join(''):'<div class="muted" style="padding:8px 0;font-size:12px;">No lot movements recorded</div>';
+
+  document.getElementById('det-log').innerHTML=profile+weightLog;
+  document.getElementById('det-moves').innerHTML=movesHtml;
+  document.getElementById('det-wt-btn').style.display=a.status==='sold'?'none':'';
+  document.getElementById('det-wt-btn').onclick=function(){CM('m-detail');openWt(tag);};
+  OM('m-detail');
+  setTimeout(function(){
+    if(detChart) detChart.destroy();
+    var ctx=document.getElementById('det-chart').getContext('2d');
+    detChart=new Chart(ctx,{type:'line',data:{
+      labels:a.weights.map(function(w){return fd(w.date);}),
+      datasets:[
+        {label:'Weight',data:a.weights.map(function(w){return w.wt;}),borderColor:'#2d7024',backgroundColor:'rgba(45,112,36,.07)',pointBackgroundColor:'#2d7024',pointRadius:5,tension:.3,fill:true},
+        {label:'Target '+T+' kg',data:a.weights.map(function(){return T;}),borderColor:'#dc2626',borderDash:[5,5],pointRadius:0,fill:false}
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:30}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10}},min:Math.max(0,Math.min.apply(null,a.weights.map(function(w){return w.wt;}))-4),max:Math.max(T+5,Math.max.apply(null,a.weights.map(function(w){return w.wt;}))+4)}}}});
+  },200);
+}
+
+function resetAddAnimalForm(){
+  document.getElementById('m-add-a-title').textContent='Register animal';
+  document.getElementById('a-save-btn').textContent='Register animal';
+  document.getElementById('a-edit-orig-tag').value='';
+  ['a-tag','a-breed','a-colour','a-dob','a-source','a-notes','a-ewt','a-interval','a-price'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('a-sex').value='Ram';
+  document.getElementById('a-status').value='active';
+  document.getElementById('a-edate').value=today();
+}
+
+function saveAnimal(){
+  var tag=document.getElementById('a-tag').value.trim();
+  if(!tag){toast('Tag ID is required');return;}
+  var origTag=document.getElementById('a-edit-orig-tag').value;
+  var isEdit=!!origTag;
+  if(!isEdit&&DB.animals.find(function(a){return a.tag===tag;})){toast('Tag already exists');return;}
+  if(isEdit&&tag!==origTag&&DB.animals.find(function(a){return a.tag===tag;})){toast('Tag already used by another animal');return;}
+  var wt=parseFloat(document.getElementById('a-ewt').value)||0;
+  var status=document.getElementById('a-status').value;
+  var lot=status==='watch'?15:getLotForWeight(wt);
+  var iv=document.getElementById('a-interval').value;
+  if(isEdit){
+    var a=DB.animals.find(function(x){return x.tag===origTag;});
+    if(!a){toast('Animal not found');return;}
+    a.tag=tag; a.breed=document.getElementById('a-breed').value;
+    a.sex=document.getElementById('a-sex').value;
+    a.colour=document.getElementById('a-colour').value;
+    a.dob=document.getElementById('a-dob').value;
+    a.source=document.getElementById('a-source').value;
+    a.entry=document.getElementById('a-edate').value;
+    a.purchasePrice=parseFloat(document.getElementById('a-price').value)||0;
+    a.status=status; a.notes=document.getElementById('a-notes').value;
+    a.interval=iv?parseInt(iv):null;
+    if(a.status!=='watch') a.lot=getLotForWeight(cw(a));
+    toast(tag+' updated');
+  } else {
+    DB.animals.push({tag:tag,lot:lot,sex:document.getElementById('a-sex').value,
+      breed:document.getElementById('a-breed').value,colour:document.getElementById('a-colour').value,
+      dob:document.getElementById('a-dob').value,source:document.getElementById('a-source').value,
+      entry:document.getElementById('a-edate').value,purchasePrice:parseFloat(document.getElementById('a-price').value)||0,
+      status:status,notes:document.getElementById('a-notes').value,
+      interval:iv?parseInt(iv):null,
+      weights:[{date:document.getElementById('a-edate').value,wt:wt,by:'Entry record',cond:'',notes:''}]});
+    toast(tag+' registered → Lot '+lot);
+  }
+  save(); CM('m-add-a');
+  ['a-tag','a-breed','a-colour','a-dob','a-source','a-notes','a-ewt','a-interval','a-price','a-edit-orig-tag'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('a-save-btn').textContent='Register animal';
+  document.getElementById('m-add-a-title').textContent='Register animal';
+  RA(); RD();
+}
+
+function editAnimal(tag){
+  var a=DB.animals.find(function(x){return x.tag===tag;});
+  if(!a)return;
+  document.getElementById('m-add-a-title').textContent='Edit animal — '+tag;
+  document.getElementById('a-save-btn').textContent='Save changes';
+  document.getElementById('a-edit-orig-tag').value=tag;
+  document.getElementById('a-tag').value=a.tag;
+  document.getElementById('a-breed').value=a.breed||'';
+  document.getElementById('a-sex').value=a.sex||'Ram';
+  document.getElementById('a-colour').value=a.colour||'';
+  document.getElementById('a-dob').value=a.dob||'';
+  document.getElementById('a-source').value=a.source||'';
+  document.getElementById('a-edate').value=a.entry||'';
+  document.getElementById('a-price').value=a.purchasePrice||'';
+  document.getElementById('a-ewt').value=a.weights&&a.weights.length?a.weights[0].wt:'';
+  document.getElementById('a-status').value=a.status==='sold'?'active':a.status;
+  document.getElementById('a-notes').value=a.notes||'';
+  document.getElementById('a-interval').value=a.interval||'';
+  OM('m-add-a');
+}
+
+function deleteAnimal(tag){
+  if(!confirm('Permanently delete '+tag+'?\n\nThis will remove all weight records and history. This cannot be undone.'))return;
+  DB.animals=DB.animals.filter(function(a){return a.tag!==tag;});
+  moveLog=moveLog.filter(function(m){return m.tag!==tag;});
+  save(); RA(); RD(); toast(tag+' deleted');
+}
+
+function openSell(tag){
+  var a=DB.animals.find(function(x){return x.tag===tag;});
+  if(!a)return;
+  document.getElementById('sell-tag').value=tag;
+  document.getElementById('sell-tag-label').textContent=tag;
+  document.getElementById('sell-date').value=today();
+  document.getElementById('sell-wt').value=cw(a).toFixed(1);
+  document.getElementById('sell-price').value='';
+  document.getElementById('sell-buyer').value='';
+  document.getElementById('sell-phone').value='';
+  document.getElementById('sell-lot').value='Lot '+a.lot;
+  document.getElementById('sell-notes').value='';
+  OM('m-sell');
+}
+
+function confirmSale(){
+  var tag=document.getElementById('sell-tag').value;
+  var price=parseFloat(document.getElementById('sell-price').value)||0;
+  if(!price){toast('Enter sale price');return;}
+  var a=DB.animals.find(function(x){return x.tag===tag;});
+  if(!a)return;
+  a.status='sold';
+  a.saleDate=document.getElementById('sell-date').value;
+  a.saleWeight=parseFloat(document.getElementById('sell-wt').value)||cw(a);
+  a.salePrice=price;
+  a.buyer=document.getElementById('sell-buyer').value;
+  a.buyerPhone=document.getElementById('sell-phone').value;
+  a.soldFromLot=a.lot;
+  a.soldFromLotLabel='Lot '+a.lot;
+  a.saleNotes=document.getElementById('sell-notes').value;
+  save(); CM('m-sell');
+  toast(tag+' sold for KES '+price.toLocaleString('en-KE'));
+  RA(); RD();
+}
+
+function markSold(tag){
+  openSell(tag);
+}
+
+function moveLot15(tag){
+  var a=DB.animals.find(function(x){return x.tag===tag;});
+  if(!a)return;
+  if(!confirm('Move '+tag+' to Lot 15 (observation)?'))return;
+  moveLog.unshift({tag:tag,from:a.lot,to:15,date:today(),wt:cw(a),reason:'Manual — moved to observation'});
+  a.lot=15; a.status='watch';
+  save(); RA(); RD(); toast(tag+' moved to Lot 15');
+}
+
+// ============================================================
+// LOTS
+// ============================================================
+function RL(){
+  var act=DB.animals.filter(function(a){return a.status!=='sold';});
+  var full=LOT_CONFIG.filter(function(lc){return act.filter(function(a){return a.lot===lc.num;}).length>=lc.cap;}).length;
+  var obs=act.filter(function(a){return a.lot===15;}).length;
+  var todayMoves=moveLog.filter(function(m){return m.date===today();}).length;
+  document.getElementById('lk-full').textContent=full;
+  document.getElementById('lk-moves').textContent=todayMoves;
+  document.getElementById('lk-obs').textContent=obs;
+  var lg=document.getElementById('lots-grid');
+  lg.innerHTML=LOT_CONFIG.map(function(lc){
+    var animals=act.filter(function(a){return a.lot===lc.num;});
+    var cnt=animals.length;
+    if(cnt===0) return '';
+    var pct=Math.min(100,Math.round(cnt/lc.cap*100));
+    var col=pct>=100?'#dc2626':pct>=80?'#d4920a':'#2d7024';
+    var avgWt=cnt?( animals.reduce(function(s,a){return s+cw(a);},0)/cnt).toFixed(1):'–';
+    var range=lc.obs?'Observation (sick/underperformers)':lc.min+' – '+(lc.max===999?'∞':lc.max)+' kg';
+    var rdy=lc.min>=getTarget()?animals.length:animals.filter(function(a){return cw(a)>=getTarget();}).length;
+    var tags=animals.slice(0,8).map(function(a){return '<span class="bdg gray" style="font-size:9px;margin:1px;">'+a.tag+'</span>';}).join('')+(animals.length>8?'<span class="muted" style="font-size:10px;"> +'+( animals.length-8)+' more</span>':'');
+    return '<div class="card" style="padding:11px;margin-bottom:8px;border-left:3px solid '+col+';">'+
+      '<div class="fb"><div><div style="font-size:13px;font-weight:600;">'+lc.label+'</div><div class="muted" style="font-size:10px;">'+range+'</div></div>'+
+      '<div class="lot-count">'+cnt+'<span style="font-size:11px;font-weight:400;color:var(--muted);">/'+lc.cap+'</span></div></div>'+
+      '<div class="pb" style="margin:7px 0;"><div class="pf" style="width:'+pct+'%;background:'+col+';"></div></div>'+
+      '<div class="fb muted" style="font-size:11px;margin-bottom:6px;"><span>Avg weight: '+avgWt+' kg</span>'+(rdy>0?'<span class="bdg ok">'+rdy+' ready</span>':'')+'</div>'+
+      '<div style="margin-top:5px;">'+tags+'</div>'+
+    '</div>';
+  }).filter(Boolean).join('')||'<div class="empty">No lots occupied</div>';
+  var ml=document.getElementById('move-log-list');
+  ml.innerHTML=moveLog.slice(0,20).map(function(m){return '<div class="move-log"><span class="bold">'+m.tag+'</span> — Lot '+m.from+' → Lot '+m.to+' &nbsp;·&nbsp; '+m.wt.toFixed(1)+' kg &nbsp;·&nbsp; '+fd(m.date)+' &nbsp;·&nbsp; <span class="muted">'+m.reason+'</span></div>';}).join('')||'<div class="muted" style="font-size:12px;padding:8px 0;">No lot movements recorded yet</div>';
+}
+
+// ============================================================
+// HEALTH
+// ============================================================
+function RH(){
+  var td=new Date();td.setHours(0,0,0,0);
+  var in7=new Date(td);in7.setDate(td.getDate()+7);
+  var ov=0,du=0,dn=0;
+  DB.health.forEach(function(e){if(e.status==='done')dn++;else{var d=new Date(e.date);if(d<td)ov++;else if(d<=in7)du++;}});
+  document.getElementById('h-over').textContent=ov;
+  document.getElementById('h-due').textContent=du;
+  document.getElementById('h-done').textContent=dn;
+  var tf=document.getElementById('hf-type').value,sf=document.getElementById('hf-st').value;
+  var list=DB.health.filter(function(e){return !tf||e.type===tf;});
+  if(sf==='overdue')list=list.filter(function(e){return e.status!=='done'&&new Date(e.date)<td;});
+  else if(sf==='due')list=list.filter(function(e){var d=new Date(e.date);return e.status!=='done'&&d>=td&&d<=in7;});
+  else if(sf==='upcoming')list=list.filter(function(e){var d=new Date(e.date);return e.status!=='done'&&d>in7;});
+  else if(sf==='done')list=list.filter(function(e){return e.status==='done';});
+  var el=document.getElementById('h-list');
+  if(!list.length){el.innerHTML='<div class="empty">No events match filter</div>';return;}
+  el.innerHTML='<div class="card" style="padding:0;">'+list.map(function(e,i){
+    var d=new Date(e.date);d.setHours(0,0,0,0);
+    var sb,sl;
+    if(e.status==='done'){sb='ok';sl='done';}
+    else if(d<td){sb='bad';sl='overdue';}
+    else if(d<=in7){sb='warn';sl='due soon';}
+    else{sb='info';sl='upcoming';}
+    var idx=DB.health.indexOf(e);
+    return '<div style="padding:11px 13px;border-bottom:1px solid var(--bdr);display:flex;align-items:flex-start;gap:10px;">'+
+      '<div style="flex:1;"><div style="font-size:13px;font-weight:500;">'+e.type+' — '+e.drug+'</div>'+
+      '<div class="muted" style="font-size:11px;">'+e.target+' · '+fd(e.date)+' · '+e.route+' · '+e.by+'</div>'+
+      (e.notes?'<div class="muted" style="font-size:10px;margin-top:2px;">'+e.notes+'</div>':'')+
+      '</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">'+
+      '<span class="bdg '+sb+'">'+sl+'</span>'+
+      (e.status!=='done'?'<button class="btn bsm" style="background:var(--g50);color:var(--g600);border:1px solid var(--g200);font-size:10px;" onclick="markDone('+idx+')">✓ Done</button>':'')+
+      '</div></div>';
+  }).join('')+'</div>';
+}
+
+function SHE(){
+  var drug=document.getElementById('he-drug').value.trim();
+  if(!drug){toast('Product name required');return;}
+  DB.health.push({type:document.getElementById('he-type').value,drug:drug,target:document.getElementById('he-target').value,date:document.getElementById('he-date').value,dose:document.getElementById('he-dose').value,route:document.getElementById('he-route').value,by:document.getElementById('he-by').value,status:'upcoming',notes:document.getElementById('he-notes').value});
+  save();CM('m-add-h');toast('Health event scheduled');
+  ['he-drug','he-dose','he-by','he-notes'].forEach(function(id){document.getElementById(id).value='';});
+  RH();RD();
+}
+
+function markDone(i){DB.health[i].status='done';save();toast('Marked as complete');RH();RD();}
+
+// ============================================================
+// FEEDING PROGRAM
+// ============================================================
+function getFeedRations(){
+  if(!DB.feedProgram||!DB.feedProgram.rations){
+    var d=defaults();DB.feedProgram=d.feedProgram;
+  }
+  return DB.feedProgram.rations;
+}
+
+function calcLotFeedTotals(){
+  var act=DB.animals.filter(function(a){return a.status!=='sold';});
+  var rations=getFeedRations();
+  var totals={silage:0,concentrate:0,hay:0,animals:0};
+  LOT_CONFIG.forEach(function(lc){
+    var animals=act.filter(function(a){return a.lot===lc.num;});
+    if(!animals.length)return;
+    var r=rations[lc.num]||{silage:0,concentrate:0,hay:0};
+    var n=animals.length;
+    totals.silage+=n*(parseFloat(r.silage)||0);
+    totals.concentrate+=n*(parseFloat(r.concentrate)||0);
+    totals.hay+=n*(parseFloat(r.hay)||0);
+    totals.animals+=n;
+  });
+  return totals;
+}
+
+function RF(){
+  var act=DB.animals.filter(function(a){return a.status!=='sold';});
+  var rations=getFeedRations();
+  var fp=DB.feedProgram;
+
+  // Totals header
+  var totals=calcLotFeedTotals();
+  document.getElementById('fk-conc').textContent=totals.concentrate.toFixed(1)+' kg';
+  document.getElementById('fk-silage').textContent=totals.silage.toFixed(1)+' kg';
+  document.getElementById('fk-hay').textContent=totals.hay.toFixed(1)+' kg';
+
+  // Per-lot ration editor — only show occupied lots
+  var el=document.getElementById('feed-ration-list');
+  var occupiedLots=LOT_CONFIG.filter(function(lc){
+    return act.filter(function(a){return a.lot===lc.num;}).length>0;
+  });
+  if(!occupiedLots.length){el.innerHTML='<div class="empty">No animals in any lot yet</div>';return;}
+
+  el.innerHTML=occupiedLots.map(function(lc){
+    var animals=act.filter(function(a){return a.lot===lc.num;});
+    var n=animals.length;
+    var r=rations[lc.num]||{silage:0.6,concentrate:1.0,hay:0.4};
+    var s=parseFloat(r.silage)||0;
+    var c=parseFloat(r.concentrate)||0;
+    var h=parseFloat(r.hay)||0;
+    var range=lc.obs?'Observation':lc.min+' – '+(lc.max===999?'∞':lc.max)+' kg';
+    return '<div class="card" style="padding:11px;margin-bottom:8px;" id="fcard-'+lc.num+'">'+
+      '<div class="fb" style="margin-bottom:8px;">'+
+        '<div><div style="font-size:13px;font-weight:600;">'+lc.label+'</div>'+
+        '<div class="muted" style="font-size:10px;">'+range+' · <strong>'+n+'</strong> animals</div></div>'+
+        '<div style="text-align:right;font-size:11px;color:var(--muted);">'+
+          'Total feed today:<br>'+
+          '<span class="mono" style="font-size:12px;color:var(--txt);">'+(n*(s+c+h)).toFixed(1)+' kg</span>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">'+
+        '<div class="fg" style="margin:0;">'+
+          '<label>Silage (kg/animal)</label>'+
+          '<input type="number" step="0.1" min="0" value="'+s+'" id="fs-'+lc.num+'" oninput="updateLotFeedRow('+lc.num+')">'+
+          '<div class="muted" style="font-size:10px;margin-top:2px;">Total: <span id="fts-'+lc.num+'">'+(n*s).toFixed(1)+'</span> kg</div>'+
+        '</div>'+
+        '<div class="fg" style="margin:0;">'+
+          '<label>Concentrate (kg/animal)</label>'+
+          '<input type="number" step="0.1" min="0" value="'+c+'" id="fc-'+lc.num+'" oninput="updateLotFeedRow('+lc.num+')">'+
+          '<div class="muted" style="font-size:10px;margin-top:2px;">Total: <span id="ftc-'+lc.num+'">'+(n*c).toFixed(1)+'</span> kg</div>'+
+        '</div>'+
+        '<div class="fg" style="margin:0;">'+
+          '<label>Hay (kg/animal)</label>'+
+          '<input type="number" step="0.1" min="0" value="'+h+'" id="fh-'+lc.num+'" oninput="updateLotFeedRow('+lc.num+')">'+
+          '<div class="muted" style="font-size:10px;margin-top:2px;">Total: <span id="fth-'+lc.num+'">'+(n*h).toFixed(1)+'</span> kg</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  // Palatability & water dropdowns
+  var palEl=document.getElementById('feed-pal');
+  var watEl=document.getElementById('feed-water');
+  var flkEl=document.getElementById('feed-flock');
+  var dngEl=document.getElementById('feed-dung');
+  if(palEl&&fp.palatability) palEl.value=fp.palatability;
+  if(watEl&&fp.water) watEl.value=fp.water;
+  if(flkEl&&fp.flockCondition) flkEl.value=fp.flockCondition;
+  if(dngEl&&fp.dung) dngEl.value=fp.dung;
+  if(document.getElementById('feed-obs')) document.getElementById('feed-obs').value=fp.observations||'';
+
+  // Summary table
+  renderFeedSummaryTable(act,rations);
+}
+
+function updateLotFeedRow(lotNum){
+  var act=DB.animals.filter(function(a){return a.status!=='sold';});
+  var n=act.filter(function(a){return a.lot===lotNum;}).length;
+  var s=parseFloat(document.getElementById('fs-'+lotNum).value)||0;
+  var c=parseFloat(document.getElementById('fc-'+lotNum).value)||0;
+  var h=parseFloat(document.getElementById('fh-'+lotNum).value)||0;
+  var tsEl=document.getElementById('fts-'+lotNum);
+  var tcEl=document.getElementById('ftc-'+lotNum);
+  var thEl=document.getElementById('fth-'+lotNum);
+  if(tsEl) tsEl.textContent=(n*s).toFixed(1);
+  if(tcEl) tcEl.textContent=(n*c).toFixed(1);
+  if(thEl) thEl.textContent=(n*h).toFixed(1);
+  updateFeedHeaderTotals(act);
+}
+
+function updateFeedHeaderTotals(act){
+  var totalS=0,totalC=0,totalH=0;
+  LOT_CONFIG.forEach(function(lc){
+    var n=act.filter(function(a){return a.lot===lc.num;}).length;
+    if(!n)return;
+    var sEl=document.getElementById('fs-'+lc.num);
+    var cEl=document.getElementById('fc-'+lc.num);
+    var hEl=document.getElementById('fh-'+lc.num);
+    if(!sEl)return;
+    totalS+=n*(parseFloat(sEl.value)||0);
+    totalC+=n*(parseFloat(cEl.value)||0);
+    totalH+=n*(parseFloat(hEl.value)||0);
+  });
+  var fks=document.getElementById('fk-silage');
+  var fkc=document.getElementById('fk-conc');
+  var fkh=document.getElementById('fk-hay');
+  if(fks) fks.textContent=totalS.toFixed(1)+' kg';
+  if(fkc) fkc.textContent=totalC.toFixed(1)+' kg';
+  if(fkh) fkh.textContent=totalH.toFixed(1)+' kg';
+}
+
+function saveFeedProgram(){
+  var act=DB.animals.filter(function(a){return a.status!=='sold';});
+  var rations=getFeedRations();
+  LOT_CONFIG.forEach(function(lc){
+    var sEl=document.getElementById('fs-'+lc.num);
+    var cEl=document.getElementById('fc-'+lc.num);
+    var hEl=document.getElementById('fh-'+lc.num);
+    if(!sEl)return;
+    rations[lc.num]={
+      silage:parseFloat(sEl.value)||0,
+      concentrate:parseFloat(cEl.value)||0,
+      hay:parseFloat(hEl.value)||0
+    };
+  });
+  DB.feedProgram.rations=rations;
+  DB.feedProgram.palatability=document.getElementById('feed-pal').value;
+  DB.feedProgram.water=document.getElementById('feed-water').value;
+  DB.feedProgram.flockCondition=document.getElementById('feed-flock').value;
+  DB.feedProgram.dung=document.getElementById('feed-dung').value;
+  DB.feedProgram.observations=document.getElementById('feed-obs').value;
+  DB.feedProgram.lastSaved=today();
+  save();
+  toast('Feeding program saved for '+today());
+  renderFeedSummaryTable(act,rations);
+}
+
+function renderFeedSummaryTable(act,rations){
+  var el=document.getElementById('feed-summary-table');
+  if(!el)return;
+  var occupiedLots=LOT_CONFIG.filter(function(lc){
+    return act.filter(function(a){return a.lot===lc.num;}).length>0;
+  });
+  if(!occupiedLots.length){el.innerHTML='<div class="empty">No animals in any lot</div>';return;}
+  var totalS=0,totalC=0,totalH=0,totalA=0;
+  var rows=occupiedLots.map(function(lc){
+    var animals=act.filter(function(a){return a.lot===lc.num;});
+    var n=animals.length;
+    var r=rations[lc.num]||{silage:0,concentrate:0,hay:0};
+    var s=parseFloat(r.silage)||0;
+    var c=parseFloat(r.concentrate)||0;
+    var h=parseFloat(r.hay)||0;
+    totalA+=n;totalS+=n*s;totalC+=n*c;totalH+=n*h;
+    return '<tr><td><strong>'+lc.label+'</strong></td><td class="mono">'+n+'</td>'+
+      '<td class="mono">'+s.toFixed(1)+' kg/hd<br><span style="color:var(--muted);font-size:10px;">→ '+(n*s).toFixed(1)+' kg</span></td>'+
+      '<td class="mono">'+c.toFixed(1)+' kg/hd<br><span style="color:var(--muted);font-size:10px;">→ '+(n*c).toFixed(1)+' kg</span></td>'+
+      '<td class="mono">'+h.toFixed(1)+' kg/hd<br><span style="color:var(--muted);font-size:10px;">→ '+(n*h).toFixed(1)+' kg</span></td>'+
+      '<td class="mono bold">'+(n*(s+c+h)).toFixed(1)+' kg</td>'+
+    '</tr>';
+  });
+  el.innerHTML='<div class="tw"><table>'+
+    '<thead><tr><th>Lot</th><th>Animals</th><th>Silage</th><th>Concentrate</th><th>Hay</th><th>Total feed</th></tr></thead>'+
+    '<tbody>'+rows.join('')+
+    '<tr style="background:var(--g50);font-weight:600;">'+
+      '<td>TOTAL</td><td class="mono">'+totalA+'</td>'+
+      '<td class="mono">'+totalS.toFixed(1)+' kg</td>'+
+      '<td class="mono">'+totalC.toFixed(1)+' kg</td>'+
+      '<td class="mono">'+totalH.toFixed(1)+' kg</td>'+
+      '<td class="mono bold">'+(totalS+totalC+totalH).toFixed(1)+' kg</td>'+
+    '</tr>'+
+    '</tbody></table></div>';
+}
+
+function buildFeedingProgramText(act){
+  // Builds the formatted feeding program section for reports
+  var fp=DB.feedProgram||{};
+  var rations=fp.rations||{};
+  var occupiedLots=LOT_CONFIG.filter(function(lc){
+    return act.filter(function(a){return a.lot===lc.num;}).length>0;
+  });
+  if(!occupiedLots.length) return 'No animals in any lot.\n';
+  var out='';
+  var totalS=0,totalC=0,totalH=0,totalA=0;
+  occupiedLots.forEach(function(lc){
+    var animals=act.filter(function(a){return a.lot===lc.num;});
+    var n=animals.length;
+    var r=rations[lc.num]||{silage:0,concentrate:0,hay:0};
+    var s=parseFloat(r.silage)||0;
+    var c=parseFloat(r.concentrate)||0;
+    var h=parseFloat(r.hay)||0;
+    var range=lc.obs?'Observation':lc.min+' – '+(lc.max===999?'≥35':lc.max)+' kg';
+    totalA+=n;totalS+=n*s;totalC+=n*c;totalH+=n*h;
+    out+='  '+lc.label+' ('+range+')\n';
+    out+='  • Number of animals: '+n+'\n';
+    out+='  • Silage:       '+s.toFixed(1)+' kg/animal  →  '+(n*s).toFixed(1)+' kg\n';
+    out+='  • Concentrate:  '+c.toFixed(1)+' kg/animal  →  '+(n*c).toFixed(1)+' kg\n';
+    out+='  • Hay:          '+h.toFixed(1)+' kg/animal  →  '+(n*h).toFixed(1)+' kg\n';
+    out+='  '+('─'.repeat(40))+'\n';
+  });
+  out+='\n  FEED TOTALS (all lots)\n';
+  out+='  • Total animals:     '+totalA+'\n';
+  out+='  • Total silage:      '+totalS.toFixed(1)+' kg\n';
+  out+='  • Total concentrate: '+totalC.toFixed(1)+' kg\n';
+  out+='  • Total hay:         '+totalH.toFixed(1)+' kg\n';
+  out+='  • Grand total feed:  '+(totalS+totalC+totalH).toFixed(1)+' kg\n';
+  if(fp.palatability||fp.water||fp.dung){
+    out+='\n  Feed & health status:\n';
+    if(fp.palatability) out+='  • Palatability:      '+fp.palatability+'\n';
+    if(fp.water)        out+='  • Water intake:      '+fp.water+'\n';
+    if(fp.dung)         out+='  • Dung consistency:  '+fp.dung+'\n';
+  }
+  if(fp.observations) out+='\n  Observations: '+fp.observations+'\n';
+  return out;
+}
+
+// ============================================================
+// INVENTORY
+// ============================================================
+var invCat='';
+var invCats=['All','Feed','Health','Machinery','Supplies'];
+
+function RI(){
+  var low=DB.inventory.filter(function(i){return i.reorder>0&&i.stock<=i.reorder;});
+  var feed=DB.inventory.filter(function(i){return i.cat.startsWith('Feed')&&i.daily>0;});
+  var minD=feed.length?Math.min.apply(null,feed.map(function(i){return Math.floor(i.stock/i.daily);})):null;
+  var totalVal=DB.inventory.reduce(function(s,i){return s+(i.stock*(i.cost||0));},0);
+  document.getElementById('ik-low').textContent=low.length;
+  document.getElementById('ik-days').textContent=minD!==null?minD+' d':'–';
+  document.getElementById('ik-val').textContent=totalVal>999?(totalVal/1000).toFixed(0)+'K':Math.round(totalVal);
+  // category tabs
+  var tabs=document.getElementById('inv-tabs');
+  tabs.innerHTML=invCats.map(function(c){return '<div class="ctab'+(invCat===c||(!invCat&&c==='All')?' on':'')+'" onclick="setInvCat(\''+c+'\')">'+(c==='All'?'All items':c)+'</div>';}).join('');
+  // item list
+  var list=DB.inventory.filter(function(i){return !invCat||invCat==='All'||i.cat.startsWith(invCat);});
+  var sel=document.getElementById('con-item');
+  sel.innerHTML=DB.inventory.map(function(it,i){return '<option value="'+i+'">'+it.name+'</option>';}).join('');
+  var el=document.getElementById('inv-list');
+  if(!list.length){el.innerHTML='<div class="empty">No items in this category</div>';return;}
+  el.innerHTML=list.map(function(it,gi){
+    var ri=DB.inventory.indexOf(it);
+    var days=it.daily>0?Math.floor(it.stock/it.daily):null;
+    var isLow=it.reorder>0&&it.stock<=it.reorder;
+    var isWarn=it.reorder>0&&it.stock<=it.reorder*1.5&&!isLow;
+    var pct=it.reorder>0?Math.min(100,Math.round(it.stock/(it.reorder*3)*100)):60;
+    var col=isLow?'#dc2626':isWarn?'#d4920a':'#2d7024';
+    var val=(it.stock*(it.cost||0)).toLocaleString('en-KE');
+    return '<div class="cf" style="'+(isLow?'border:1px solid var(--r200);background:var(--r50);':'')+'">'+
+      '<div class="fb" style="margin-bottom:3px;"><span style="font-size:13px;font-weight:500;">'+it.name+'</span>'+
+      '<span class="bdg '+(isLow?'bad':isWarn?'warn':'ok')+'">'+(isLow?'reorder':isWarn?'low':'ok')+'</span></div>'+
+      '<div class="fb muted" style="font-size:10px;margin-bottom:5px;"><span>'+it.cat+(it.supplier?' · '+it.supplier:'')+'</span><span>KES '+(it.cost||0)+'/'+it.unit+'</span></div>'+
+      '<div class="fb" style="margin-bottom:5px;"><span class="mono" style="font-size:15px;font-weight:600;">'+it.stock+' <span style="font-size:11px;font-weight:400;">'+it.unit+'</span></span>'+
+      '<span class="muted" style="font-size:11px;">Value: KES '+val+(days!==null?' · '+days+' days':''+(it.reorder?' · min: '+it.reorder:''))+'</span></div>'+
+      '<div class="pb" style="margin-bottom:6px;"><div class="pf" style="width:'+pct+'%;background:'+col+';"></div></div>'+
+      '<div class="brow" style="gap:5px;margin:0;">'+
+        '<button class="btn bsm bs" onclick="restockPrompt('+ri+')">+ Restock</button>'+
+        '<button class="btn bsm bd" onclick="removeInv('+ri+')">Remove</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function setInvCat(c){invCat=c;RI();}
+
+function SI(){
+  var name=document.getElementById('in-name').value.trim();
+  if(!name){toast('Item name required');return;}
+  DB.inventory.push({name:name,cat:document.getElementById('in-cat').value,unit:document.getElementById('in-unit').value,stock:parseFloat(document.getElementById('in-stock').value)||0,daily:parseFloat(document.getElementById('in-daily').value)||0,reorder:parseFloat(document.getElementById('in-reorder').value)||0,cost:parseFloat(document.getElementById('in-cost').value)||0,supplier:document.getElementById('in-supplier').value});
+  save();CM('m-add-i');toast(name+' added to inventory');
+  ['in-name','in-stock','in-daily','in-reorder','in-cost','in-supplier'].forEach(function(id){document.getElementById(id).value='';});
+  RI();RD();
+}
+
+function RC(){
+  var idx=parseInt(document.getElementById('con-item').value);
+  var qty=parseFloat(document.getElementById('con-qty').value)||0;
+  if(!qty){toast('Enter quantity used');return;}
+  DB.inventory[idx].stock=Math.max(0,parseFloat((DB.inventory[idx].stock-qty).toFixed(3)));
+  save();document.getElementById('con-qty').value='';
+  toast('Usage recorded for '+DB.inventory[idx].name);RI();RD();
+}
+
+function restockPrompt(i){
+  var qty=prompt('Qty to add to '+DB.inventory[i].name+' ('+DB.inventory[i].unit+'):');
+  if(!qty||isNaN(parseFloat(qty)))return;
+  DB.inventory[i].stock=parseFloat((DB.inventory[i].stock+parseFloat(qty)).toFixed(3));
+  save();toast('Restocked '+DB.inventory[i].name);RI();RD();
+}
+
+function removeInv(i){
+  if(!confirm('Remove '+DB.inventory[i].name+'?'))return;
+  DB.inventory.splice(i,1);save();RI();toast('Item removed');
+}
+
+// ============================================================
+// STAFF
+// ============================================================
+function RS(){
+  var colors=['#d4ebce','#dbeafe','#fef9c3','#fce7f3','#e0e7ff'];
+  var tcols=['#1f5219','#1e3a8a','#713f12','#831843','#3730a3'];
+  var el=document.getElementById('staff-list');
+  if(!DB.staff||!DB.staff.length){el.innerHTML='<div class="empty">No staff registered</div>';return;}
+  el.innerHTML=DB.staff.map(function(s,i){
+    var ini=s.name.split(' ').map(function(n){return n[0];}).join('').slice(0,2).toUpperCase();
+    var ci=i%5;
+    var sb=s.status==='active'?'ok':s.status==='leave'?'warn':'gray';
+    return '<div class="scard">'+
+      '<div class="sav" style="background:'+colors[ci]+';color:'+tcols[ci]+';">'+ini+'</div>'+
+      '<div style="flex:1;"><div style="font-size:13px;font-weight:500;">'+s.name+'</div>'+
+      '<div class="muted" style="font-size:11px;">'+s.role+' · '+s.phone+'</div>'+
+      '<div class="muted" style="font-size:10px;">'+s.lots+'</div></div>'+
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">'+
+        '<span class="bdg '+sb+'">'+s.status+'</span>'+
+        '<button class="btn bsm" style="background:var(--r50);color:var(--r500);font-size:10px;padding:2px 7px;" onclick="removeStaff('+i+')">Remove</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function SS(){
+  var name=document.getElementById('sf-name').value.trim();
+  if(!name){toast('Name required');return;}
+  DB.staff.push({name:name,role:document.getElementById('sf-role').value,phone:document.getElementById('sf-phone').value,start:document.getElementById('sf-start').value,status:document.getElementById('sf-st').value,lots:document.getElementById('sf-lots').value});
+  save();CM('m-add-s');toast(name+' added');
+  ['sf-name','sf-phone','sf-lots'].forEach(function(id){document.getElementById(id).value='';});
+  RS();
+}
+
+function removeStaff(i){
+  if(!confirm('Remove '+DB.staff[i].name+'?'))return;
+  DB.staff.splice(i,1);save();RS();toast('Staff member removed');
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function loadSettings(){
+  document.getElementById('set-name').value=SET.name||'';
+  document.getElementById('set-loc').value=SET.location||'';
+  document.getElementById('set-owner').value=SET.owner||'';
+  document.getElementById('set-phone').value=SET.phone||'';
+  document.getElementById('set-reg').value=SET.reg||'';
+  document.getElementById('set-interval').value=SET.interval||14;
+  document.getElementById('set-target').value=SET.target||35;
+}
+
+function saveSettings(){
+  SET.name=document.getElementById('set-name').value.trim()||'My Farm';
+  SET.location=document.getElementById('set-loc').value.trim();
+  SET.owner=document.getElementById('set-owner').value.trim();
+  SET.phone=document.getElementById('set-phone').value.trim();
+  SET.reg=document.getElementById('set-reg').value.trim();
+  SET.interval=parseInt(document.getElementById('set-interval').value)||14;
+  SET.target=parseFloat(document.getElementById('set-target').value)||35;
+  save();toast('Farm profile saved');RD();
+}
+
+// ============================================================
+// REPORTS
+// ============================================================
+function farmHeader(title,date,by){
+  var sep='═'.repeat(50);
+  return SET.name.toUpperCase()+'\n'+
+    (SET.location?SET.location+'\n':'')+
+    (SET.owner?'Manager: '+SET.owner:'')+(SET.phone?' · '+SET.phone:'')+'\n'+
+    (SET.reg?'Reg/KRA: '+SET.reg+'\n':'')+
+    sep+'\n'+title.toUpperCase()+'\n'+
+    'Date: '+date+'\nPrepared by: '+by+'\n'+sep+'\n\n';
+}
+
+function GR(mode){
+  var type=document.getElementById('r-type').value;
+  var date=fd(document.getElementById('r-date').value);
+  var by=document.getElementById('r-by').value||SET.owner||'–';
+  var notes=document.getElementById('r-notes').value;
+  var T=getTarget();
+  var sep='─'.repeat(50);
+  var out='';
+
+  if(type==='daily'){
+    var act=DB.animals.filter(function(a){return a.status!=='sold';});
+    var ready=act.filter(function(a){return cw(a)>=T;});
+    var fp=DB.feedProgram||{};
+    var lotSec=LOT_CONFIG.map(function(lc){
+      var c=act.filter(function(a){return a.lot===lc.num;}).length;
+      var range=lc.obs?'observation':lc.min+'\u2013'+(lc.max===999?'\u221e':lc.max)+' kg';
+      return c>0?'  \u2022 '+lc.label+' ('+range+'): '+c+' animals':null;
+    }).filter(Boolean).join('\n');
+    out=farmHeader('Daily Feedlot Report',date,by)+
+      '1. GENERAL OVERVIEW\n'+
+      '  \u2022 Flock condition:    '+(fp.flockCondition||'Lively and in good health')+'\n'+
+      '  \u2022 Feed palatability:  '+(fp.palatability||'Not recorded')+'\n'+
+      '  \u2022 Water intake:       '+(fp.water||'Not recorded')+'\n'+
+      '  \u2022 Active animals:     '+act.length+'\n'+
+      '  \u2022 Ready for sale:     '+ready.length+' animals (\u226510 kg target: \u2265'+T+' kg)\n'+
+      '  \u2022 Dung consistency:   '+(fp.dung||'Not recorded')+'\n'+
+      '  \u2022 Under observation:  '+act.filter(function(a){return a.lot===15;}).length+' animals (Lot 15)\n'+
+      '  \u2022 Weighing due:       '+act.filter(function(a){var d=daysUntilWeigh(a);return d!==null&&d<=7;}).length+' animals in next 7 days\n\n'+
+      sep+'\n'+
+      '2. LOT SUMMARY\n'+lotSec+'\n\n'+
+      sep+'\n'+
+      '3. FEEDING PROGRAM\n\n'+buildFeedingProgramText(act)+'\n'+
+      sep+'\n'+
+      '4. FEED STOCK STATUS\n'+
+      DB.inventory.filter(function(i){return i.cat.startsWith('Feed');}).map(function(i){
+        var d=i.daily>0?Math.floor(i.stock/i.daily)+' days remaining':'\u2013';
+        var flag=i.reorder>0&&i.stock<=i.reorder?' \u26a0 REORDER NOW':'';
+        return '  \u2022 '+i.name+': '+i.stock+' '+i.unit+' ('+d+')'+flag;
+      }).join('\n')+'\n\n'+
+      sep+'\n'+
+      '5. HEALTH ALERTS\n'+
+      (DB.animals.filter(function(a){return a.lot===15||a.status==='watch';}).map(function(a){return '  \u2022 '+a.tag+' (Lot '+a.lot+') \u2014 '+cw(a).toFixed(1)+' kg \u2014 '+(a.notes||'Under observation');}).join('\n')||'  No health alerts today')+'\n\n'+
+      sep+'\n'+
+      '6. REMARKS & OBSERVATIONS\n  '+(notes||'No additional observations.')+'\n\n'+
+      sep+'\nPrepared by: '+by+'\nGenerated: '+new Date().toLocaleString();
+  } else if(type==='animals'){
+    out=farmHeader('Individual Animal Register',date,by)+
+      DB.animals.map(function(a){var g=adg(a),d=dtm(a);return a.tag+' | Lot '+a.lot+' | '+a.sex+' — '+a.breed+'\nCurrent: '+cw(a).toFixed(1)+' kg | ADG: '+(g!==null?Math.round(g*1000)+' g/d':'–')+' | Days to target: '+(d===0?'READY':d!==null?d+'d':'–')+'\nStatus: '+a.status.toUpperCase()+' | Next weigh: '+fd(nextWeigh(a))+(a.notes?'\nNotes: '+a.notes:'')+'\nWeight log: '+a.weights.map(function(w){return fd(w.date)+': '+w.wt+' kg';}).join(' → ');}).join('\n\n'+sep+'\n\n')+'\n\n'+sep+'\nGenerated: '+new Date().toLocaleString();
+  } else if(type==='lot'){
+    out=farmHeader('Lot Report',date,by);
+    LOT_CONFIG.forEach(function(lc){
+      var animals=DB.animals.filter(function(a){return a.lot===lc.num&&a.status!=='sold';});
+      if(!animals.length) return;
+      var range=lc.obs?'Observation':lc.min+' – '+(lc.max===999?'∞':lc.max)+' kg';
+      var avgWt=(animals.reduce(function(s,a){return s+cw(a);},0)/animals.length).toFixed(1);
+      out+=lc.label.toUpperCase()+' ('+range+') — '+animals.length+'/'+lc.cap+' animals — Avg: '+avgWt+' kg\n';
+      animals.forEach(function(a){out+='  '+a.tag+' | '+a.breed+'/'+a.sex+' | '+cw(a).toFixed(1)+' kg | Next weigh: '+fd(nextWeigh(a))+'\n';});
+      out+='\n';
+    });
+    out+=sep+'\nGenerated: '+new Date().toLocaleString();
+  } else if(type==='weigh'){
+    out=farmHeader('Weighing Schedule & History',date,by);
+    var td=new Date();
+    var act=DB.animals.filter(function(a){return a.status!=='sold';});
+    var due=act.filter(function(a){var d=daysUntilWeigh(a);return d!==null&&d<=7;}).sort(function(a,b){return (daysUntilWeigh(a)||0)-(daysUntilWeigh(b)||0);});
+    out+='WEIGHING DUE (NEXT 7 DAYS)\n';
+    if(due.length){due.forEach(function(a){out+='• '+a.tag+' (Lot '+a.lot+') — Last: '+fd(a.weights[a.weights.length-1].date)+' — Due: '+fd(nextWeigh(a))+'\n';});}else{out+='No animals due for weighing in next 7 days.\n';}
+    out+='\n'+sep+'\nFULL WEIGHING LOG\n';
+    act.forEach(function(a){out+='\n'+a.tag+' ('+a.breed+'):\n'+a.weights.map(function(w){return '  '+fd(w.date)+': '+w.wt+' kg'+(w.by?' by '+w.by:'')+(w.cond?' ['+w.cond+']':'')+(w.notes?' — '+w.notes:'');}).join('\n')+'\nNext weigh: '+fd(nextWeigh(a))+'\n';});
+    out+='\n'+sep+'\nGenerated: '+new Date().toLocaleString();
+  } else if(type==='health'){
+    out=farmHeader('Health & Treatment Log',date,by)+
+      DB.health.map(function(e){return '['+e.status.toUpperCase()+'] '+fd(e.date)+'\nType: '+e.type+'\nProduct: '+e.drug+'\nTarget: '+e.target+'\nDose / Route: '+e.dose+' — '+e.route+'\nBy: '+e.by+(e.notes?'\nNotes: '+e.notes:'');}).join('\n\n'+sep+'\n\n')+'\n\n'+sep+'\nGenerated: '+new Date().toLocaleString();
+  } else if(type==='inventory'){
+    out=farmHeader('Inventory Status & Costs',date,by);
+    var catGroups=['Feed','Health','Machinery','Supplies'];
+    var totalVal=0;
+    catGroups.forEach(function(cat){
+      var items=DB.inventory.filter(function(i){return i.cat.startsWith(cat);});
+      if(!items.length) return;
+      out+=cat.toUpperCase()+' INVENTORY\n';
+      items.forEach(function(i){
+        var val=(i.stock*(i.cost||0));
+        totalVal+=val;
+        var st=i.stock<=i.reorder?'⚠ REORDER':i.stock<=i.reorder*1.5?'LOW':'OK';
+        var days=i.daily>0?Math.floor(i.stock/i.daily)+' days':'N/A';
+        out+='  '+i.name+'\n';
+        out+='    Stock: '+i.stock+' '+i.unit+' | Unit cost: KES '+N2(i.cost)+' | Stock value: KES '+val.toLocaleString('en-KE')+'\n';
+        out+='    Daily use: '+(i.daily||'N/A')+' | Days left: '+days+' | Reorder at: '+i.reorder+' | Status: '+st+(i.supplier?' | Supplier: '+i.supplier:'')+'\n';
+      });
+      out+='\n';
+    });
+    out+=sep+'\nTOTAL INVENTORY VALUE: KES '+totalVal.toLocaleString('en-KE')+'\n\n'+(notes?'Notes: '+notes+'\n\n':'')+sep+'\nGenerated: '+new Date().toLocaleString();
+  } else if(type==='weekly'){
+    var act2=DB.animals.filter(function(a){return a.status==='active';});
+    out=farmHeader('Weekly Summary Report',date,by)+
+      'FLOCK STATUS\n'+
+      '• Active: '+act2.length+' | Ready (≥'+T+'kg): '+act2.filter(function(a){return cw(a)>=T;}).length+'\n'+
+      '• Under observation: '+DB.animals.filter(function(a){return a.lot===15;}).length+'\n\n'+
+      'LOT OCCUPANCY\n'+
+      LOT_CONFIG.map(function(lc){var c=DB.animals.filter(function(a){return a.lot===lc.num&&a.status!=='sold';}).length;return c>0?'• '+lc.label+': '+c+'/'+lc.cap:null;}).filter(Boolean).join('\n')+'\n\n'+
+      'INVENTORY ALERTS\n'+
+      (DB.inventory.filter(function(i){return i.stock<=i.reorder&&i.reorder>0;}).map(function(i){return '• REORDER: '+i.name+' — '+i.stock+' '+i.unit;}).join('\n')||'All items adequate')+'\n\n'+
+      'HEALTH EVENTS PENDING\n'+
+      (DB.health.filter(function(e){return e.status!=='done';}).map(function(e){return '• '+fd(e.date)+': '+e.type+' — '+e.drug+' ('+e.target+')';}).join('\n')||'None pending')+'\n\n'+
+      'STOCK VALUE\nTotal inventory: KES '+DB.inventory.reduce(function(s,i){return s+(i.stock*(i.cost||0));},0).toLocaleString('en-KE')+'\n\n'+
+      'OBSERVATIONS\n'+(notes||'–')+'\n\n'+sep+'\nGenerated: '+new Date().toLocaleString();
+  } else if(type==='moves'){
+    out=farmHeader('Lot Movement History',date,by)+
+      (moveLog.length?moveLog.map(function(m){return fd(m.date)+' | '+m.tag+' | Lot '+m.from+' → Lot '+m.to+' | '+m.wt.toFixed(1)+' kg | '+m.reason;}).join('\n'):'No lot movements recorded')+'\n\n'+sep+'\nGenerated: '+new Date().toLocaleString();
+  } else if(type==='sales'){
+    var sold=DB.animals.filter(function(a){return a.status==='sold';});
+    var totalRev=sold.reduce(function(s,a){return s+(a.salePrice||0);},0);
+    var totalCost=sold.reduce(function(s,a){return s+(a.purchasePrice||0);},0);
+    var totalProfit=totalRev-totalCost;
+    out=farmHeader('Animals Sold Report',date,by)+
+      'SUMMARY\n'+
+      '• Total animals sold: '+sold.length+'\n'+
+      '• Total revenue: KES '+totalRev.toLocaleString('en-KE')+'\n'+
+      '• Total purchase cost: KES '+totalCost.toLocaleString('en-KE')+'\n'+
+      '• Gross profit: KES '+totalProfit.toLocaleString('en-KE')+'\n'+
+      (sold.length?'• Avg sale price: KES '+Math.round(totalRev/sold.length).toLocaleString('en-KE'):'')+'\n\n'+
+      sep+'\nINDIVIDUAL SALE RECORDS\n\n'+
+      (sold.length?sold.map(function(a){
+        return a.tag+' | '+a.breed+' / '+a.sex+(a.dob?' | DOB: '+fd(a.dob):'')+'\n'+
+          'Sold: '+fd(a.saleDate)+' | From: '+(a.soldFromLotLabel||'Lot '+a.lot)+'\n'+
+          'Sale weight: '+(a.saleWeight||cw(a)).toFixed(1)+' kg\n'+
+          'Sale price: KES '+(a.salePrice||0).toLocaleString('en-KE')+
+          (a.purchasePrice?' | Purchase: KES '+a.purchasePrice.toLocaleString('en-KE')+' | Profit: KES '+((a.salePrice||0)-(a.purchasePrice||0)).toLocaleString('en-KE'):'')+'\n'+
+          (a.buyer?'Buyer: '+a.buyer+(a.buyerPhone?' · '+a.buyerPhone:'')+'\n':'')+
+          (a.saleNotes?'Notes: '+a.saleNotes+'\n':'');
+      }).join('\n'+sep+'\n\n'):'No animals have been sold yet.')+
+      '\n\n'+sep+'\n'+(notes?'Notes: '+notes+'\n\n':'')+sep+'\nGenerated: '+new Date().toLocaleString();
+  }
+
+  if(mode==='screen'){
+    document.getElementById('r-text').textContent=out;
+    document.getElementById('r-out').classList.remove('hidden');
+    document.getElementById('r-out').scrollIntoView({behavior:'smooth',block:'start'});
+  } else if(mode==='print'){
+    var w=window.open('','_blank');
+    w.document.write('<!DOCTYPE html><html><head><title>'+document.getElementById('r-type').options[document.getElementById('r-type').selectedIndex].text+'</title><style>body{font-family:monospace;font-size:12px;line-height:1.6;padding:20px;white-space:pre-wrap;}@media print{body{padding:10px;}}</style></head><body>'+out.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</body></html>');
+    w.document.close();w.focus();w.print();
+  } else if(mode==='pdf'){
+    genPDF(out,document.getElementById('r-type').options[document.getElementById('r-type').selectedIndex].text,date);
+  }
+}
+
+function genPDF(text,title,date){
+  try{
+    var jspdf=window.jspdf||window.jsPDF;
+    if(!jspdf&&window.jspdf) jspdf=window.jspdf.jsPDF;
+    if(!jspdf&&window.jsPDF) jspdf=window.jsPDF;
+    if(typeof jspdf==='undefined'&&window.jspdf) jspdf=window.jspdf.jsPDF;
+    // try all variants
+    var PDF;
+    try{ PDF=new jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'}); }
+    catch(e){ try{ PDF=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'}); } catch(e2){ PDF=new window.jsPDF({orientation:'portrait',unit:'mm',format:'a4'}); }}
+    
+    PDF.setFont('courier','normal');
+    PDF.setFontSize(8);
+    var lines=PDF.splitTextToSize(text,190);
+    var y=15,pageH=287;
+    PDF.setFontSize(11);PDF.setFont('courier','bold');
+    PDF.text(SET.name+' — '+title,10,y);y+=6;
+    PDF.setFontSize(8);PDF.setFont('courier','normal');
+    PDF.text(SET.location+' · '+date,10,y);y+=8;
+    PDF.setDrawColor(180);PDF.line(10,y,200,y);y+=5;
+    PDF.setFontSize(7.5);
+    lines.forEach(function(line){
+      if(y>pageH-10){PDF.addPage();y=15;}
+      PDF.text(line,10,y);y+=4;
+    });
+    // footer
+    PDF.setFontSize(7);PDF.setTextColor(150);
+    PDF.text(SET.name+' · Generated '+new Date().toLocaleString(),10,pageH+5);
+    PDF.save(SET.name.replace(/\s+/g,'_')+'_'+title.replace(/\s+/g,'_')+'_'+date+'.pdf');
+    toast('PDF downloaded');
+  }catch(err){
+    toast('PDF error — try Print instead');
+    console.error('PDF error:',err);
+  }
+}
+
+function shareR(){
+  var text=document.getElementById('r-text').textContent;
+  if(navigator.share){navigator.share({title:SET.name+' Report',text:text});}
+  else{CP('r-text');}
+}
+
+// ============================================================
+// AI ADVISOR
+// ============================================================
+async function getAI(){
+  var focus=document.getElementById('ai-focus').value;
+  var concern=document.getElementById('ai-concern').value;
+  var btn=document.getElementById('ai-btn');
+  var out=document.getElementById('ai-out');
+  btn.innerHTML='<span class="spin"></span>Generating…';btn.disabled=true;
+  out.classList.remove('hidden');out.textContent='';
+  document.getElementById('ai-cp').classList.add('hidden');
+  var act=DB.animals.filter(function(a){return a.status!=='sold';});
+  var T=getTarget();
+  var lotSummary=LOT_CONFIG.map(function(lc){var c=act.filter(function(a){return a.lot===lc.num;}).length;return c>0?lc.label+': '+c+' animals':null;}).filter(Boolean).join(', ');
+  var farmData='Farm: '+SET.name+', '+SET.location+'\nActive animals: '+act.length+'\nReady (≥'+T+'kg): '+act.filter(function(a){return cw(a)>=T;}).length+'\nObservation (Lot 15): '+act.filter(function(a){return a.lot===15;}).length+'\nAvg weight: '+(act.length?(act.reduce(function(s,a){return s+cw(a);},0)/act.length).toFixed(1):'N/A')+' kg\nLot summary: '+lotSummary+'\nWeighing due 7 days: '+act.filter(function(a){var d=daysUntilWeigh(a);return d!==null&&d<=7;}).length+'\nLow stock: '+DB.inventory.filter(function(i){return i.stock<=i.reorder&&i.reorder>0;}).map(function(i){return i.name;}).join(', ')+'\nOverdue health events: '+DB.health.filter(function(e){return e.status!=='done'&&new Date(e.date)<new Date();}).length+'\nSpecific concern: '+(concern||'None');
+  var prompt='You are a professional sheep feedlot consultant with 20+ years of East Africa experience.\n\nFARM DATA:\n'+farmData+'\n\nFOCUS: '+focus+'\n\nWrite a structured professional recommendation:\n1. Situation Assessment (3-4 sentences)\n2. Priority Actions (numbered, 6+ specific items)\n3. Timeline: Today / This Week / This Month\n4. KPIs to Track\n5. Risk Flags (any critical issues)\n\nBe technical, direct, and practical. Use livestock management terminology.';
+  try{
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    var data=await res.json();
+    var text=(data.content||[]).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('')||'No response received.';
+    out.textContent=text;document.getElementById('ai-cp').classList.remove('hidden');
+  }catch(e){out.textContent='Connection error. Check internet and try again.';}
+  btn.innerHTML='Get professional recommendation';btn.disabled=false;
+}
+
+// ============================================================
+// DATA BACKUP
+// ============================================================
+function exportData(){
+  var data=JSON.stringify({db:DB,set:SET,moves:moveLog,exported:new Date().toISOString()},null,2);
+  var blob=new Blob([data],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download=(SET.name||'farm').replace(/\s+/g,'_')+'_backup_'+today()+'.json';
+  a.click();URL.revokeObjectURL(url);toast('Backup exported');
+}
+
+function importData(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      if(!data.db||!data.db.animals){toast('Invalid backup file');return;}
+      if(!confirm('Replace all current data with backup? This cannot be undone.'))return;
+      DB=data.db;SET=data.set||SET;moveLog=data.moves||[];
+      save();toast('Data restored successfully');
+      RD();RA();RS();RH();RI();loadSettings();
+    }catch(err){toast('Error reading file');}
+  };
+  reader.readAsText(file);input.value='';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init(){
+  var stored=load();
+  if(stored&&stored.db){DB=stored.db;SET=stored.set||defaults().set||{name:'My Farm',location:'',owner:'',phone:'',reg:'',interval:14,target:35};moveLog=stored.moves||[];
+    if(!DB.feedProgram){var d2=defaults();DB.feedProgram=d2.feedProgram;}
+  }
+  else{var d=defaults();DB=d;SET={name:'My Feedlot Farm',location:'Nairobi, Kenya',owner:'Farm Manager',phone:'',reg:'',interval:14,target:35};moveLog=[];}
+  var t=today();
+  ['a-edate','wf-date','sf-start','he-date','r-date'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=t;});
+  // close modals on overlay click
+  document.querySelectorAll('.mo').forEach(function(overlay){overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.classList.remove('on');});});
+  updInfo();RD();
+}
+
+window.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
