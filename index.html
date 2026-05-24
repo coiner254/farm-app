@@ -2541,23 +2541,22 @@ function addLogoutBtn(){
   if(!morePane||document.getElementById('logout-btn-wrap')) return;
   var div = document.createElement('div');
   div.id='logout-btn-wrap';
-  div.innerHTML=
-    '<div class="sec">Account</div>'+
-    '<div class="card" style="margin-bottom:10px;">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'+
-        '<div>'+
-          '<div style="font-size:14px;font-weight:600;" id="logged-in-name">–</div>'+
-          '<div class="muted" id="logged-in-email" style="font-size:11px;">–</div>'+
-          '<div style="margin-top:4px;" id="logged-in-role-badge"></div>'+
-        '</div>'+
-        '<button class="btn bd" onclick="doLogout()">Sign out</button>'+
-      '</div>'+
-    '</div>'+
-    // Admin-only: user management panel
-    '<div class="admin-only" style="display:none;">'+
-      '<div class="sec">User management <span style="font-size:10px;background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd;border-radius:20px;padding:2px 7px;font-weight:600;">Admin only</span></div>'+
-      '<div id="user-manager-wrap"></div>'+
-    '</div>';
+  var html = '<div class="sec">Account</div>';
+  html += '<div class="card" style="margin-bottom:10px;">';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+  html += '<div>';
+  html += '<div style="font-size:14px;font-weight:600;" id="logged-in-name">–</div>';
+  html += '<div class="muted" id="logged-in-email" style="font-size:11px;">–</div>';
+  html += '<div style="margin-top:4px;" id="logged-in-role-badge"></div>';
+  html += '</div>';
+  html += '<button class="btn bd" onclick="doLogout()">Sign out</button>';
+  html += '</div>';
+  html += '</div>';
+  html += '<div class="admin-only" style="display:none;">';
+  html += '<div class="sec">User management <span style="font-size:10px;background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd;border-radius:20px;padding:2px 7px;font-weight:600;">Admin only</span></div>';
+  html += '<div id="user-manager-wrap"></div>';
+  html += '</div>';
+  div.innerHTML = html;
   morePane.insertBefore(div, morePane.firstChild);
 }
 
