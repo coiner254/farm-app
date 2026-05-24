@@ -236,6 +236,9 @@ tr:hover td{background:var(--gray50);}
   </div>
 </div>
 
+<!-- SYNC STATUS BANNER -->
+<div id="sync-banner" style="display:none;padding:8px 14px;font-size:12px;font-weight:500;border-bottom:1px solid;text-align:center;position:sticky;top:62px;z-index:99;"></div>
+
 <!-- CONTENT -->
 <div class="content">
 
@@ -425,6 +428,18 @@ tr:hover td{background:var(--gray50);}
 <!-- MORE (Settings + AI) -->
 <div id="pane-more" class="pane">
   <div class="page-title">Settings & Advisor</div>
+
+  <div class="sec">Database connection (Supabase)</div>
+  <div class="card">
+    <div id="conn-status-box" style="padding:9px 11px;border-radius:var(--r);margin-bottom:10px;font-size:12px;font-weight:500;"></div>
+    <div class="fg"><label>Supabase Project URL</label><input id="set-supa-url" placeholder="https://xxxxxxxxxxxx.supabase.co" autocomplete="off"></div>
+    <div class="fg"><label>Supabase Anon / Public Key</label><input id="set-supa-key" placeholder="eyJhbGci..." autocomplete="off" type="password"></div>
+    <p class="muted" style="margin-bottom:8px;">Find these in your Supabase project → Settings → API</p>
+    <div class="brow">
+      <button class="btn bp" onclick="saveSupabaseConfig()">Connect to database</button>
+      <button class="btn bs" onclick="loadFromCloud().then(function(ok){if(ok){RD();RA();}})">↻ Sync now</button>
+    </div>
+  </div>
 
   <div class="sec">Farm profile</div>
   <div class="card">
@@ -639,19 +654,287 @@ var LOT_CONFIG = [
   {num:15, label:'Lot 15 (Observation)', min:-1, max:999, cap:50, obs:true}
 ];
 
-var KEY = 'ffm_pro_v2';
+// ============================================================
+// SUPABASE CONFIGURATION
+// Replace these two values with your own from Supabase
+// Project Settings → API → Project URL and anon/public key
+// ============================================================
+var SUPA_URL = 'YOUR_SUPABASE_URL';
+var SUPA_KEY = 'YOUR_SUPABASE_ANON_KEY';
+var CONFIGURED = (SUPA_URL !== 'YOUR_SUPABASE_URL' && SUPA_KEY !== 'YOUR_SUPABASE_ANON_KEY');
+
 var DB, SET, detChart=null, dshChart=null, curTag=null, moveLog=[];
+var DB_LOADED = false;
+var SYNC_QUEUE = [];
 
 // ============================================================
-// STORAGE
+// SUPABASE API HELPER
 // ============================================================
-function load(){
-  try{ var r=localStorage.getItem(KEY); if(r) return JSON.parse(r); }catch(e){}
-  return defaults();
+async function sbReq(method, table, data, params){
+  if(!CONFIGURED) return null;
+  var url = SUPA_URL + '/rest/v1/' + table;
+  if(params) url += '?' + params;
+  var opts = {
+    method: method,
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method==='POST'?'return=representation':'return=representation'
+    }
+  };
+  if(data) opts.body = JSON.stringify(data);
+  try{
+    var res = await fetch(url, opts);
+    if(!res.ok){ var err=await res.text(); console.error('SB error',table,err); return null; }
+    var ct = res.headers.get('content-type')||'';
+    if(ct.includes('json')) return await res.json();
+    return true;
+  }catch(e){ console.error('SB fetch error',e); return null; }
 }
-function save(){
-  localStorage.setItem(KEY, JSON.stringify({db:DB,set:SET,moves:moveLog}));
+
+async function sbGet(table, params){ return await sbReq('GET', table, null, params); }
+async function sbPost(table, data){ return await sbReq('POST', table, data); }
+async function sbPatch(table, data, params){ return await sbReq('PATCH', table, data, params); }
+async function sbDelete(table, params){ return await sbReq('DELETE', table, null, params); }
+async function sbUpsert(table, data, params){
+  var url = SUPA_URL + '/rest/v1/' + table + (params?'?'+params:'');
+  try{
+    var res = await fetch(url, {
+      method:'POST',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=representation'},
+      body: JSON.stringify(data)
+    });
+    if(!res.ok){ var e=await res.text(); console.error('SB upsert error',e); return null; }
+    return await res.json();
+  }catch(e){ console.error('SB upsert error',e); return null; }
+}
+
+// ============================================================
+// OFFLINE FALLBACK — localStorage backup
+// ============================================================
+var KEY = 'ffm_pro_v2';
+function saveLocal(){
+  try{ localStorage.setItem(KEY, JSON.stringify({db:DB,set:SET,moves:moveLog})); }catch(e){}
   updInfo();
+}
+function loadLocal(){
+  try{ var r=localStorage.getItem(KEY); if(r) return JSON.parse(r); }catch(e){}
+  return null;
+}
+
+// ============================================================
+// MAIN SAVE — writes to Supabase + localStorage backup
+// ============================================================
+function save(){
+  saveLocal(); // always save locally too
+}
+
+// ============================================================
+// LOAD FROM SUPABASE
+// ============================================================
+async function loadFromCloud(){
+  if(!CONFIGURED){
+    showBanner('warn','Running in offline mode — configure Supabase to enable team sync.');
+    return false;
+  }
+  showBanner('info','Connecting to database…');
+  try{
+    // Load all tables in parallel
+    var [settingsR, animalsR, weightsR, healthR, invR, staffR, movesR, feedPR, feedSR] = await Promise.all([
+      sbGet('farm_settings','select=*'),
+      sbGet('animals','select=*&order=tag.asc'),
+      sbGet('weight_records','select=*&order=weigh_date.asc'),
+      sbGet('health_events','select=*&order=event_date.asc'),
+      sbGet('inventory','select=*&order=name.asc'),
+      sbGet('staff','select=*&order=name.asc'),
+      sbGet('lot_movements','select=*&order=created_at.desc'),
+      sbGet('feed_program','select=*&order=lot_num.asc'),
+      sbGet('feed_status','select=*')
+    ]);
+
+    if(!animalsR){ showBanner('bad','Database connection failed. Check your URL and key.'); return false; }
+
+    // Assemble DB
+    var weightsByTag = {};
+    (weightsR||[]).forEach(function(w){
+      if(!weightsByTag[w.tag]) weightsByTag[w.tag] = [];
+      weightsByTag[w.tag].push({date:w.weigh_date, wt:parseFloat(w.weight_kg), by:w.recorded_by||'', cond:w.condition||'', notes:w.notes||'', id:w.id});
+    });
+
+    DB.animals = (animalsR||[]).map(function(a){
+      return {
+        tag:a.tag, lot:a.lot||1, sex:a.sex||'Ram', breed:a.breed||'',
+        colour:a.colour||'', dob:a.dob||'', source:a.source||'',
+        entry:a.entry_date||'', purchasePrice:parseFloat(a.purchase_price)||0,
+        status:a.status||'active', notes:a.notes||'',
+        interval:a.interval_days||null,
+        saleDate:a.sale_date||'', saleWeight:parseFloat(a.sale_weight)||0,
+        salePrice:parseFloat(a.sale_price)||0, buyer:a.buyer||'',
+        buyerPhone:a.buyer_phone||'', soldFromLot:a.sold_from_lot||null,
+        soldFromLotLabel:a.sold_from_lot?'Lot '+a.sold_from_lot:'',
+        saleNotes:a.sale_notes||'',
+        weights: weightsByTag[a.tag]||[]
+      };
+    });
+
+    DB.staff = (staffR||[]).map(function(s){
+      return {name:s.name,role:s.role||'',phone:s.phone||'',
+        start:s.start_date||'',status:s.status||'active',lots:s.assigned_lots||'',id:s.id};
+    });
+
+    DB.health = (healthR||[]).map(function(e){
+      return {type:e.type,drug:e.drug,target:e.target||'All animals',
+        date:e.event_date,dose:e.dose||'',route:e.route||'',
+        by:e.administered_by||'',status:e.status||'upcoming',notes:e.notes||'',id:e.id};
+    });
+
+    DB.inventory = (invR||[]).map(function(i){
+      return {name:i.name,cat:i.category,unit:i.unit||'kg',
+        stock:parseFloat(i.stock)||0,daily:parseFloat(i.daily_usage)||0,
+        reorder:parseFloat(i.reorder_level)||0,cost:parseFloat(i.unit_cost)||0,
+        supplier:i.supplier||'',id:i.id};
+    });
+
+    moveLog = (movesR||[]).map(function(m){
+      return {tag:m.tag,from:m.from_lot,to:m.to_lot,wt:parseFloat(m.weight_kg)||0,
+        reason:m.reason||'',date:m.move_date||today(),id:m.id};
+    });
+
+    // Feed program
+    var rations = {};
+    (feedPR||[]).forEach(function(fp){ rations[fp.lot_num]={silage:parseFloat(fp.silage_per_head)||0,concentrate:parseFloat(fp.concentrate_per_head)||0,hay:parseFloat(fp.hay_per_head)||0,dbId:fp.id}; });
+    var fs = feedSR&&feedSR.length?feedSR[0]:{};
+    DB.feedProgram = {rations:rations,palatability:fs.palatability||'excellent',water:fs.water_intake||'optimal',flockCondition:fs.flock_condition||'Lively and in good health',dung:fs.dung_consistency||'Normal — stable digestive health',observations:fs.observations||'',lastSaved:fs.last_saved||''};
+
+    // Settings
+    var s = settingsR&&settingsR.length?settingsR[0]:{};
+    SET = {name:s.name||'My Feedlot Farm',location:s.location||'',owner:s.owner||'',phone:s.phone||'',reg:s.reg||'',interval:s.interval_days||14,target:parseFloat(s.target_weight)||35};
+
+    DB_LOADED = true;
+    saveLocal();
+    showBanner('ok','Connected — data loaded from cloud database.');
+    setTimeout(hideBanner, 3000);
+    return true;
+  }catch(e){
+    console.error('loadFromCloud error',e);
+    showBanner('bad','Error loading data: '+e.message);
+    return false;
+  }
+}
+
+// ============================================================
+// STATUS BANNER
+// ============================================================
+function showBanner(type, msg){
+  var b = document.getElementById('sync-banner');
+  if(!b) return;
+  var colors={ok:'#f0f7ee',warn:'#fdf6e3',bad:'#fef2f2',info:'#eff6ff'};
+  var tcols={ok:'#2d7024',warn:'#b07a08',bad:'#dc2626',info:'#2563eb'};
+  b.style.background=colors[type]||colors.info;
+  b.style.color=tcols[type]||tcols.info;
+  b.style.borderColor=type==='ok'?'#a8d69d':type==='warn'?'#f5d98a':type==='bad'?'#fca5a5':'#93c5fd';
+  b.textContent=msg;
+  b.style.display='block';
+}
+function hideBanner(){ var b=document.getElementById('sync-banner'); if(b) b.style.display='none'; }
+
+// ============================================================
+// CLOUD WRITE HELPERS — called after every data change
+// ============================================================
+async function cloudSaveAnimal(a){
+  if(!CONFIGURED) return;
+  var row = {tag:a.tag,lot:a.lot,sex:a.sex,breed:a.breed,colour:a.colour||'',
+    dob:a.dob||null,source:a.source||'',entry_date:a.entry||null,
+    purchase_price:a.purchasePrice||0,status:a.status,notes:a.notes||'',
+    interval_days:a.interval||null,sale_date:a.saleDate||null,
+    sale_weight:a.saleWeight||null,sale_price:a.salePrice||null,
+    buyer:a.buyer||'',buyer_phone:a.buyerPhone||'',
+    sold_from_lot:a.soldFromLot||null,sale_notes:a.saleNotes||'',
+    updated_at:new Date().toISOString()};
+  await sbUpsert('animals', row);
+}
+
+async function cloudSaveWeight(tag, w){
+  if(!CONFIGURED) return;
+  if(w.id){ await sbPatch('weight_records',{weight_kg:w.wt,recorded_by:w.by,condition:w.cond,notes:w.notes},'id=eq.'+w.id); return; }
+  var row = {tag:tag,weigh_date:w.date,weight_kg:w.wt,recorded_by:w.by||'',condition:w.cond||'',notes:w.notes||''};
+  var r = await sbPost('weight_records', row);
+  if(r&&r.length) w.id = r[0].id;
+}
+
+async function cloudDeleteAnimal(tag){
+  if(!CONFIGURED) return;
+  await sbDelete('animals','tag=eq.'+encodeURIComponent(tag));
+}
+
+async function cloudSaveHealth(e){
+  if(!CONFIGURED) return;
+  var row={type:e.type,drug:e.drug,target:e.target,event_date:e.date,dose:e.dose||'',route:e.route||'',administered_by:e.by||'',status:e.status,notes:e.notes||''};
+  if(e.id){ await sbPatch('health_events',row,'id=eq.'+e.id); return; }
+  var r=await sbPost('health_events',row);
+  if(r&&r.length) e.id=r[0].id;
+}
+
+async function cloudMarkHealthDone(e){
+  if(!CONFIGURED||!e.id) return;
+  await sbPatch('health_events',{status:'done'},'id=eq.'+e.id);
+}
+
+async function cloudSaveInventory(item){
+  if(!CONFIGURED) return;
+  var row={name:item.name,category:item.cat,unit:item.unit,stock:item.stock,daily_usage:item.daily,reorder_level:item.reorder,unit_cost:item.cost,supplier:item.supplier||'',updated_at:new Date().toISOString()};
+  if(item.id){ await sbPatch('inventory',row,'id=eq.'+item.id); return; }
+  var r=await sbPost('inventory',row);
+  if(r&&r.length) item.id=r[0].id;
+}
+
+async function cloudDeleteInventory(id){
+  if(!CONFIGURED||!id) return;
+  await sbDelete('inventory','id=eq.'+id);
+}
+
+async function cloudRecordConsumption(invId, qty, purpose){
+  if(!CONFIGURED||!invId) return;
+  await sbPost('consumption_log',{inventory_id:invId,qty_used:qty,purpose:purpose||'',used_date:today()});
+  await sbPatch('inventory',{stock:DB.inventory.find(function(i){return i.id===invId;})||0},'id=eq.'+invId);
+}
+
+async function cloudSaveStaff(s){
+  if(!CONFIGURED) return;
+  var row={name:s.name,role:s.role||'',phone:s.phone||'',start_date:s.start||null,status:s.status,assigned_lots:s.lots||''};
+  if(s.id){ await sbPatch('staff',row,'id=eq.'+s.id); return; }
+  var r=await sbPost('staff',row);
+  if(r&&r.length) s.id=r[0].id;
+}
+
+async function cloudDeleteStaff(id){
+  if(!CONFIGURED||!id) return;
+  await sbDelete('staff','id=eq.'+id);
+}
+
+async function cloudSaveMove(m){
+  if(!CONFIGURED) return;
+  var row={tag:m.tag,from_lot:m.from,to_lot:m.to,weight_kg:m.wt,reason:m.reason||'',move_date:m.date};
+  var r=await sbPost('lot_movements',row);
+  if(r&&r.length) m.id=r[0].id;
+}
+
+async function cloudSaveFeedProgram(){
+  if(!CONFIGURED) return;
+  var rations=DB.feedProgram.rations||{};
+  var rows=Object.keys(rations).map(function(lotNum){
+    var r=rations[lotNum];
+    return {lot_num:parseInt(lotNum),silage_per_head:r.silage||0,concentrate_per_head:r.concentrate||0,hay_per_head:r.hay||0,updated_at:new Date().toISOString()};
+  });
+  if(rows.length) await sbUpsert('feed_program',rows);
+  var fp=DB.feedProgram;
+  await sbUpsert('feed_status',[{id:1,flock_condition:fp.flockCondition||'',palatability:fp.palatability||'',water_intake:fp.water||'',dung_consistency:fp.dung||'',observations:fp.observations||'',last_saved:today(),updated_at:new Date().toISOString()}]);
+}
+
+async function cloudSaveSettings(){
+  if(!CONFIGURED) return;
+  await sbUpsert('farm_settings',[{id:1,name:SET.name,location:SET.location||'',owner:SET.owner||'',phone:SET.phone||'',reg:SET.reg||'',interval_days:SET.interval||14,target_weight:SET.target||35,updated_at:new Date().toISOString()}]);
 }
 function defaults(){
   SET={name:'My Feedlot Farm',location:'Nairobi, Kenya',owner:'Farm Manager',phone:'',reg:'',interval:14,target:35};
@@ -810,8 +1093,10 @@ function assignLot(animal, newWt){
   var suggested=getLotForWeight(newWt);
   var old=animal.lot;
   if(suggested!==old){
-    moveLog.unshift({tag:animal.tag,from:old,to:suggested,date:today(),wt:newWt,reason:'Auto — weight '+(newWt).toFixed(1)+' kg'});
+    var _am={tag:animal.tag,from:old,to:suggested,date:today(),wt:newWt,reason:'Auto — weight '+(newWt).toFixed(1)+' kg'};
+    moveLog.unshift(_am);
     if(moveLog.length>200) moveLog.pop();
+    cloudSaveMove(_am);
   }
   return suggested;
 }
@@ -1002,6 +1287,9 @@ function saveWeight(){
   var newLot=assignLot(a,wt);
   a.lot=newLot;
   save(); CM('m-wt');
+  cloudSaveAnimal(a);
+  var _lastW=a.weights[a.weights.length-1];
+  cloudSaveWeight(a.tag, _lastW);
   toast('Weight saved · assigned to Lot '+newLot);
   RA(); RD();
   if(document.getElementById('m-detail').classList.contains('on')) viewAnimal(curTag);
@@ -1121,6 +1409,9 @@ function saveAnimal(){
     toast(tag+' registered → Lot '+lot);
   }
   save(); CM('m-add-a');
+  var _savedTag=document.getElementById('a-tag').value.trim();
+  var _savedA=DB.animals.find(function(x){return x.tag===_savedTag;});
+  if(_savedA) cloudSaveAnimal(_savedA);
   ['a-tag','a-breed','a-colour','a-dob','a-source','a-notes','a-ewt','a-interval','a-price','a-edit-orig-tag'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('a-save-btn').textContent='Register animal';
   document.getElementById('m-add-a-title').textContent='Register animal';
@@ -1152,7 +1443,7 @@ function deleteAnimal(tag){
   if(!confirm('Permanently delete '+tag+'?\n\nThis will remove all weight records and history. This cannot be undone.'))return;
   DB.animals=DB.animals.filter(function(a){return a.tag!==tag;});
   moveLog=moveLog.filter(function(m){return m.tag!==tag;});
-  save(); RA(); RD(); toast(tag+' deleted');
+  save(); cloudDeleteAnimal(tag); RA(); RD(); toast(tag+' deleted');
 }
 
 function openSell(tag){
@@ -1185,7 +1476,7 @@ function confirmSale(){
   a.soldFromLot=a.lot;
   a.soldFromLotLabel='Lot '+a.lot;
   a.saleNotes=document.getElementById('sell-notes').value;
-  save(); CM('m-sell');
+  save(); cloudSaveAnimal(a); CM('m-sell');
   toast(tag+' sold for KES '+price.toLocaleString('en-KE'));
   RA(); RD();
 }
@@ -1198,9 +1489,10 @@ function moveLot15(tag){
   var a=DB.animals.find(function(x){return x.tag===tag;});
   if(!a)return;
   if(!confirm('Move '+tag+' to Lot 15 (observation)?'))return;
-  moveLog.unshift({tag:tag,from:a.lot,to:15,date:today(),wt:cw(a),reason:'Manual — moved to observation'});
+  var _mv={tag:tag,from:a.lot,to:15,date:today(),wt:cw(a),reason:'Manual — moved to observation'};
+  moveLog.unshift(_mv);
   a.lot=15; a.status='watch';
-  save(); RA(); RD(); toast(tag+' moved to Lot 15');
+  save(); cloudSaveAnimal(a); cloudSaveMove(_mv); RA(); RD(); toast(tag+' moved to Lot 15');
 }
 
 // ============================================================
@@ -1279,12 +1571,13 @@ function SHE(){
   var drug=document.getElementById('he-drug').value.trim();
   if(!drug){toast('Product name required');return;}
   DB.health.push({type:document.getElementById('he-type').value,drug:drug,target:document.getElementById('he-target').value,date:document.getElementById('he-date').value,dose:document.getElementById('he-dose').value,route:document.getElementById('he-route').value,by:document.getElementById('he-by').value,status:'upcoming',notes:document.getElementById('he-notes').value});
-  save();CM('m-add-h');toast('Health event scheduled');
+  var _he=DB.health[DB.health.length-1];
+  save();cloudSaveHealth(_he);CM('m-add-h');toast('Health event scheduled');
   ['he-drug','he-dose','he-by','he-notes'].forEach(function(id){document.getElementById(id).value='';});
   RH();RD();
 }
 
-function markDone(i){DB.health[i].status='done';save();toast('Marked as complete');RH();RD();}
+function markDone(i){DB.health[i].status='done';save();cloudMarkHealthDone(DB.health[i]);toast('Marked as complete');RH();RD();}
 
 // ============================================================
 // FEEDING PROGRAM
@@ -1440,7 +1733,7 @@ function saveFeedProgram(){
   DB.feedProgram.dung=document.getElementById('feed-dung').value;
   DB.feedProgram.observations=document.getElementById('feed-obs').value;
   DB.feedProgram.lastSaved=today();
-  save();
+  save();cloudSaveFeedProgram();
   toast('Feeding program saved for '+today());
   renderFeedSummaryTable(act,rations);
 }
@@ -1575,7 +1868,8 @@ function SI(){
   var name=document.getElementById('in-name').value.trim();
   if(!name){toast('Item name required');return;}
   DB.inventory.push({name:name,cat:document.getElementById('in-cat').value,unit:document.getElementById('in-unit').value,stock:parseFloat(document.getElementById('in-stock').value)||0,daily:parseFloat(document.getElementById('in-daily').value)||0,reorder:parseFloat(document.getElementById('in-reorder').value)||0,cost:parseFloat(document.getElementById('in-cost').value)||0,supplier:document.getElementById('in-supplier').value});
-  save();CM('m-add-i');toast(name+' added to inventory');
+  var _ni=DB.inventory[DB.inventory.length-1];
+  save();cloudSaveInventory(_ni);CM('m-add-i');toast(name+' added to inventory');
   ['in-name','in-stock','in-daily','in-reorder','in-cost','in-supplier'].forEach(function(id){document.getElementById(id).value='';});
   RI();RD();
 }
@@ -1585,6 +1879,9 @@ function RC(){
   var qty=parseFloat(document.getElementById('con-qty').value)||0;
   if(!qty){toast('Enter quantity used');return;}
   DB.inventory[idx].stock=Math.max(0,parseFloat((DB.inventory[idx].stock-qty).toFixed(3)));
+  var _ci=DB.inventory[idx];
+  if(_ci.id) cloudRecordConsumption(_ci.id,qty,document.getElementById('con-by').value);
+  else cloudSaveInventory(_ci);
   save();document.getElementById('con-qty').value='';
   toast('Usage recorded for '+DB.inventory[idx].name);RI();RD();
 }
@@ -1598,7 +1895,8 @@ function restockPrompt(i){
 
 function removeInv(i){
   if(!confirm('Remove '+DB.inventory[i].name+'?'))return;
-  DB.inventory.splice(i,1);save();RI();toast('Item removed');
+  var _did=DB.inventory[i].id;
+  DB.inventory.splice(i,1);save();if(_did)cloudDeleteInventory(_did);RI();toast('Item removed');
 }
 
 // ============================================================
@@ -1630,19 +1928,51 @@ function SS(){
   var name=document.getElementById('sf-name').value.trim();
   if(!name){toast('Name required');return;}
   DB.staff.push({name:name,role:document.getElementById('sf-role').value,phone:document.getElementById('sf-phone').value,start:document.getElementById('sf-start').value,status:document.getElementById('sf-st').value,lots:document.getElementById('sf-lots').value});
-  save();CM('m-add-s');toast(name+' added');
+  var _ns=DB.staff[DB.staff.length-1];
+  save();cloudSaveStaff(_ns);CM('m-add-s');toast(name+' added');
   ['sf-name','sf-phone','sf-lots'].forEach(function(id){document.getElementById(id).value='';});
   RS();
 }
 
 function removeStaff(i){
   if(!confirm('Remove '+DB.staff[i].name+'?'))return;
-  DB.staff.splice(i,1);save();RS();toast('Staff member removed');
+  var _sid=DB.staff[i].id;
+  DB.staff.splice(i,1);save();if(_sid)cloudDeleteStaff(_sid);RS();toast('Staff member removed');
 }
 
 // ============================================================
 // SETTINGS
 // ============================================================
+function saveSupabaseConfig(){
+  var url=document.getElementById('set-supa-url').value.trim();
+  var key=document.getElementById('set-supa-key').value.trim();
+  if(!url||!key){toast('Enter both URL and key');return;}
+  if(!url.startsWith('https://')){toast('URL must start with https://');return;}
+  SUPA_URL=url; SUPA_KEY=key; CONFIGURED=true;
+  localStorage.setItem('supa_url',url);
+  localStorage.setItem('supa_key',key);
+  toast('Connecting…');
+  loadFromCloud().then(function(ok){
+    if(ok){RD();RA();RS();RH();RI();updateConnStatus();}
+  });
+}
+
+function updateConnStatus(){
+  var box=document.getElementById('conn-status-box');
+  if(!box)return;
+  var urlEl=document.getElementById('set-supa-url');
+  var keyEl=document.getElementById('set-supa-key');
+  if(CONFIGURED){
+    if(urlEl) urlEl.value=SUPA_URL;
+    if(keyEl) keyEl.value=SUPA_KEY;
+    box.style.background='var(--g50)';box.style.color='var(--g600)';box.style.border='1px solid var(--g200)';
+    box.textContent='✓ Connected — '+SUPA_URL.replace('https://','').split('.')[0];
+  } else {
+    box.style.background='var(--a50)';box.style.color='var(--a600)';box.style.border='1px solid var(--a200)';
+    box.textContent='⚠ Not connected — offline mode. Enter your Supabase credentials below.';
+  }
+}
+
 function loadSettings(){
   document.getElementById('set-name').value=SET.name||'';
   document.getElementById('set-loc').value=SET.location||'';
@@ -1661,7 +1991,7 @@ function saveSettings(){
   SET.reg=document.getElementById('set-reg').value.trim();
   SET.interval=parseInt(document.getElementById('set-interval').value)||14;
   SET.target=parseFloat(document.getElementById('set-target').value)||35;
-  save();toast('Farm profile saved');RD();
+  save();cloudSaveSettings();toast('Farm profile saved');RD();
 }
 
 // ============================================================
@@ -1924,16 +2254,34 @@ function importData(input){
 // INIT
 // ============================================================
 function init(){
-  var stored=load();
-  if(stored&&stored.db){DB=stored.db;SET=stored.set||defaults().set||{name:'My Farm',location:'',owner:'',phone:'',reg:'',interval:14,target:35};moveLog=stored.moves||[];
+  // Restore Supabase credentials from localStorage
+  var savedUrl=localStorage.getItem('supa_url');
+  var savedKey=localStorage.getItem('supa_key');
+  if(savedUrl&&savedKey){SUPA_URL=savedUrl;SUPA_KEY=savedKey;CONFIGURED=true;}
+
+  // Set up defaults so UI has data immediately
+  var stored = loadLocal();
+  if(stored&&stored.db){
+    DB=stored.db; SET=stored.set||{name:'My Feedlot Farm',location:'Nairobi, Kenya',owner:'Farm Manager',phone:'',reg:'',interval:14,target:35};
+    moveLog=stored.moves||[];
     if(!DB.feedProgram){var d2=defaults();DB.feedProgram=d2.feedProgram;}
+  } else {
+    var d=defaults();DB=d;
+    SET={name:'My Feedlot Farm',location:'Nairobi, Kenya',owner:'Farm Manager',phone:'',reg:'',interval:14,target:35};
+    moveLog=[];
   }
-  else{var d=defaults();DB=d;SET={name:'My Feedlot Farm',location:'Nairobi, Kenya',owner:'Farm Manager',phone:'',reg:'',interval:14,target:35};moveLog=[];}
   var t=today();
   ['a-edate','wf-date','sf-start','he-date','r-date'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=t;});
-  // close modals on overlay click
   document.querySelectorAll('.mo').forEach(function(overlay){overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.classList.remove('on');});});
-  updInfo();RD();
+  updInfo(); RD(); updateConnStatus();
+  // Then load from cloud (updates UI when done)
+  if(CONFIGURED){
+    loadFromCloud().then(function(ok){
+      if(ok){ RD(); }
+    });
+  } else {
+    showBanner('warn','⚙ Offline mode — add your Supabase keys in Settings to enable team sync.');
+  }
 }
 
 window.addEventListener('DOMContentLoaded',init);
