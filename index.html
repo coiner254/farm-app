@@ -2578,35 +2578,45 @@ function updateAccountCard(){
 async function renderUserManager(){
   var wrap = document.getElementById('user-manager-wrap');
   if(!wrap) return;
-  wrap.innerHTML='<div class="muted" style="font-size:12px;padding:8px 0;">Loading users…</div>';
+  wrap.innerHTML = '<div class="muted" style="font-size:12px;padding:8px 0;">Loading users…</div>';
   var profiles = await sbGet('user_profiles','select=*&order=created_at.asc');
-  if(!profiles){ wrap.innerHTML='<div class="muted" style="font-size:12px;">Could not load users.</div>'; return; }
-  var roleOptions=['admin','manager','attendant','vet'].map(function(r){return '<option value="'+r+'">'+r.charAt(0).toUpperCase()+r.slice(1)+'</option>';}).join('');
-  wrap.innerHTML=profiles.map(function(p,i){
-    var isMe=CURRENT_USER&&p.id===CURRENT_USER.id;
-    return '<div class="cf" style="margin-bottom:7px;">'+
-      '<div class="fb" style="gap:10px;flex-wrap:wrap;">'+
-        '<div style="flex:1;min-width:120px;">'+
-          '<div style="font-size:13px;font-weight:500;">'+(p.name||'–')+(isMe?' <span style="font-size:10px;color:#9ca3af;">(you)</span>':'')+'</div>'+
-          '<div style="font-size:11px;color:var(--muted);">'+(p.email||'–')+'</div>'+
-        '</div>'+
-        '<div style="display:flex;gap:6px;align-items:center;">'+
-          '<select id="ur-role-'+i+'" style="font-size:12px;padding:4px 6px;" '+(isMe?'disabled':'')+'>'
-            +['admin','manager','attendant','vet'].map(function(r){return '<option value="'+r+'"'+(p.role===r?' selected':'')+'">'+r.charAt(0).toUpperCase()+r.slice(1)+'</option>';}).join('')+
-          '</select>'+
-          '<input id="ur-name-'+i+'" style="font-size:12px;padding:4px 6px;width:100px;" value="'+(p.name||'')+'" placeholder="Name">'+
-          '<button class="btn bp bsm" onclick="saveUserRole(''+p.id+'','+i+')" '+(isMe?'disabled':'')+'>Save</button>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
-  }).join('')+
-  '<div class="sec" style="margin-top:12px;">Invite new user</div>'+
-  '<div class="cf">'+
-    '<div class="fr"><div class="fg" style="margin:0;"><label>Email</label><input id="invite-email" type="email" placeholder="staff@email.com"></div>'+
-    '<div class="fg" style="margin:0;"><label>Role</label><select id="invite-role">'+roleOptions+'</select></div></div>'+
-    '<button class="btn bp bfull mt8" onclick="inviteUser()">Send invitation email</button>'+
-    '<div id="invite-status" style="display:none;margin-top:7px;font-size:12px;padding:7px 10px;border-radius:8px;"></div>'+
-  '</div>';
+  if(!profiles){ wrap.innerHTML = '<div class="muted" style="font-size:12px;">Could not load users.</div>'; return; }
+  var roles = ['admin','manager','attendant','vet'];
+  var html = '';
+  profiles.forEach(function(p, i){
+    var isMe = CURRENT_USER && p.id === CURRENT_USER.id;
+    var roleOpts = roles.map(function(r){
+      return '<option value="' + r + '"' + (p.role===r?' selected':'') + '>' + r.charAt(0).toUpperCase()+r.slice(1) + '</option>';
+    }).join('');
+    html += '<div class="cf" style="margin-bottom:7px;">';
+    html += '<div class="fb" style="gap:10px;flex-wrap:wrap;">';
+    html += '<div style="flex:1;min-width:120px;">';
+    html += '<div style="font-size:13px;font-weight:500;">' + (p.name||'–') + (isMe?' <span style="font-size:10px;color:#9ca3af;">(you)</span>':'') + '</div>';
+    html += '<div style="font-size:11px;color:var(--muted);">' + (p.email||'–') + '</div>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:6px;align-items:center;">';
+    html += '<select id="ur-role-' + i + '" style="font-size:12px;padding:4px 6px;"' + (isMe?' disabled':'') + '>' + roleOpts + '</select>';
+    html += '<input id="ur-name-' + i + '" style="font-size:12px;padding:4px 6px;width:100px;" value="' + (p.name||'') + '" placeholder="Name">';
+    html += '<button class="btn bp bsm" data-uid="' + p.id + '" data-idx="' + i + '" onclick="handleSaveUserRole(this)"' + (isMe?' disabled':'') + '>Save</button>';
+    html += '</div></div></div>';
+  });
+  html += '<div class="sec" style="margin-top:12px;">Invite new user</div>';
+  html += '<div class="cf">';
+  html += '<div class="fr">';
+  html += '<div class="fg" style="margin:0;"><label>Email</label><input id="invite-email" type="email" placeholder="staff@email.com"></div>';
+  html += '<div class="fg" style="margin:0;"><label>Role</label><select id="invite-role">';
+  html += roles.map(function(r){return '<option value="'+r+'">'+r.charAt(0).toUpperCase()+r.slice(1)+'</option>';}).join('');
+  html += '</select></div></div>';
+  html += '<button class="btn bp bfull mt8" onclick="inviteUser()">Send invitation email</button>';
+  html += '<div id="invite-status" style="display:none;margin-top:7px;font-size:12px;padding:7px 10px;border-radius:8px;"></div>';
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+function handleSaveUserRole(btn){
+  var uid = btn.getAttribute('data-uid');
+  var idx = btn.getAttribute('data-idx');
+  saveUserRole(uid, parseInt(idx));
 }
 
 async function saveUserRole(uid, idx){
