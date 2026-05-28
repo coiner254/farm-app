@@ -11,70 +11,84 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
---g50:#f0f7ee;--g100:#d4ebce;--g200:#a8d69d;--g400:#5aaa4e;--g500:#3a8c2f;--g600:#2d7024;--g700:#1f5219;
---a50:#fdf6e3;--a200:#f5d98a;--a500:#d4920a;--a600:#b07a08;
---r50:#fef2f2;--r200:#fca5a5;--r500:#dc2626;--r600:#b91c1c;
---b50:#eff6ff;--b200:#93c5fd;--b500:#3b82f6;--b600:#2563eb;
---p50:#f5f3ff;--p200:#c4b5fd;--p500:#7c3aed;
---gray50:#f9fafb;--gray100:#f3f4f6;--gray200:#e5e7eb;--gray300:#d1d5db;
---gray400:#9ca3af;--gray500:#6b7280;--gray600:#4b5563;--gray700:#374151;
---gray800:#1f2937;--gray900:#111827;
---bg:#f4f6f2;--surf:#fff;--bdr:#e5e7eb;
---txt:#16200f;--muted:#556048;--light:#8a9a80;
---pri:#2d7024;--prib:#f0f7ee;
---fn:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
---r:10px;--rl:16px;--sh:0 1px 4px rgba(0,0,0,.08);
+  --g50:#f0f7ee;--g100:#d4ebce;--g200:#a8d69d;--g400:#5aaa4e;--g500:#3a8c2f;--g600:#2d7024;--g700:#1f5219;
+  --a50:#fdf6e3;--a200:#f5d98a;--a500:#d4920a;--a600:#b07a08;
+  --r50:#fef2f2;--r200:#fca5a5;--r500:#dc2626;--r600:#b91c1c;
+  --b50:#eff6ff;--b200:#93c5fd;--b500:#3b82f6;--b600:#2563eb;
+  --p50:#f5f3ff;--p200:#c4b5fd;--p500:#7c3aed;
+  --gray50:#f9fafb;--gray100:#f3f4f6;--gray200:#e5e7eb;--gray300:#d1d5db;
+  --gray400:#9ca3af;--gray500:#6b7280;--gray600:#4b5563;--gray700:#374151;
+  --gray800:#1f2937;--gray900:#111827;
+  --bg:#f0f2ee;--surf:#fff;--bdr:#e2e8df;
+  --txt:#16200f;--muted:#556048;--light:#8a9a80;
+  --pri:#2d7024;--prib:#f0f7ee;
+  --fn:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --r:8px;--rl:12px;--sh:0 1px 3px rgba(0,0,0,.07);
+  --sidebar-w:230px;--topbar-h:58px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:var(--fn);background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;min-height:100vh;}
-.app{display:flex;flex-direction:column;min-height:100vh;max-width:500px;margin:0 auto;background:var(--surf);}
 
-/* TOP BAR */
-.topbar{background:var(--pri);color:#fff;padding:14px 16px 10px;position:sticky;top:0;z-index:100;}
-.topbar-row1{display:flex;align-items:center;justify-content:space-between;}
-.topbar-farm{font-size:17px;font-weight:600;letter-spacing:-.3px;}
-.topbar-sub{font-size:11px;opacity:.8;margin-top:2px;}
-.topbar-date{font-size:11px;opacity:.75;font-family:var(--mono);text-align:right;}
-.topbar-stats{display:flex;gap:12px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.2);}
-.ts-item{font-size:11px;opacity:.85;}
-.ts-item strong{font-size:14px;font-weight:600;opacity:1;margin-right:3px;}
+/* ── APP SHELL ───────────────────────────────────────────── */
+.app{display:flex;flex-direction:column;min-height:100vh;}
 
-/* NAV */
-.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:500px;background:var(--surf);border-top:1px solid var(--bdr);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
-.ni{flex:1;display:flex;flex-direction:column;align-items:center;padding:7px 2px 5px;cursor:pointer;border:none;background:none;color:var(--light);font-family:var(--fn);}
-.ni.on{color:var(--pri);}
-.ni svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-.ni span{font-size:9px;margin-top:2px;font-weight:500;}
+/* ── TOPBAR ─────────────────────────────────────────────── */
+.topbar{background:var(--pri);color:#fff;padding:0 28px;height:var(--topbar-h);position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:16px;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+.topbar-left{display:flex;align-items:center;gap:12px;flex:1;}
+.topbar-logo{font-size:24px;line-height:1;}
+.topbar-text{}
+.topbar-farm{font-size:16px;font-weight:700;letter-spacing:-.3px;line-height:1.2;}
+.topbar-sub{font-size:11px;opacity:.72;margin-top:1px;}
+.topbar-divider{width:1px;height:28px;background:rgba(255,255,255,.25);margin:0 4px;}
+.topbar-stats{display:flex;gap:20px;}
+.ts-item{font-size:12px;opacity:.82;display:flex;align-items:center;gap:5px;}
+.ts-item strong{font-size:15px;font-weight:700;opacity:1;}
+.topbar-right{display:flex;align-items:center;gap:12px;margin-left:auto;}
+.topbar-date{font-size:11px;opacity:.7;font-family:var(--mono);}
+.topbar-user-pill{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.topbar-user-pill:hover{background:rgba(255,255,255,.25);}
 
-/* CONTENT & PANES */
-.content{flex:1;padding:12px 14px 90px;}
-.pane{display:none;animation:fi .15s ease;}.pane.on{display:block;}
+/* ── SIDEBAR ─────────────────────────────────────────────── */
+.sidebar{position:fixed;top:var(--topbar-h);left:0;bottom:0;width:var(--sidebar-w);background:var(--surf);border-right:1px solid var(--bdr);display:flex;flex-direction:column;z-index:90;overflow-y:auto;}
+.sidebar-section{padding:18px 16px 6px;font-size:10px;font-weight:600;color:var(--light);text-transform:uppercase;letter-spacing:.08em;}
+.bottom-nav{display:none;}/* hidden on desktop */
+.ni{display:flex;align-items:center;gap:10px;padding:10px 18px;cursor:pointer;border:none;background:none;color:var(--muted);font-family:var(--fn);font-size:13px;font-weight:500;width:100%;text-align:left;transition:all .12s;position:relative;}
+.ni:hover{background:var(--g50);color:var(--g600);}
+.ni.on{background:var(--prib);color:var(--pri);font-weight:600;}
+.ni.on::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;background:var(--pri);border-radius:0 3px 3px 0;}
+.ni svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.ni span{flex:1;}
+.sidebar-bottom{margin-top:auto;padding:12px 16px;border-top:1px solid var(--bdr);}
+.sidebar-user{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;}
+.sidebar-avatar{width:30px;height:30px;border-radius:50%;background:var(--g100);color:var(--g700);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+
+/* ── MAIN CONTENT ────────────────────────────────────────── */
+.content{margin-left:var(--sidebar-w);margin-top:var(--topbar-h);padding:28px 32px 48px;min-height:calc(100vh - var(--topbar-h));background:var(--bg);}
+.pane{display:none;animation:fi .15s ease;max-width:1280px;margin:0 auto;}.pane.on{display:block;}
 @keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
 
-/* TYPOGRAPHY */
-.sec{font-size:10px;font-weight:600;color:var(--light);text-transform:uppercase;letter-spacing:.07em;margin:14px 0 7px;}
-.page-title{font-size:18px;font-weight:600;letter-spacing:-.3px;margin-bottom:4px;}
-.page-sub{font-size:12px;color:var(--muted);margin-bottom:12px;}
+/* ── PAGE HEADERS ────────────────────────────────────────── */
+.sec{font-size:10px;font-weight:600;color:var(--light);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 8px;}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.page-title{font-size:22px;font-weight:700;letter-spacing:-.4px;}
+.page-sub{font-size:13px;color:var(--muted);margin-top:3px;}
 
-/* CARDS */
-.card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rl);padding:14px;margin-bottom:10px;box-shadow:var(--sh);}
-.cf{background:var(--gray50);border:1px solid var(--bdr);border-radius:var(--r);padding:11px 12px;margin-bottom:7px;}
-
-/* METRICS */
-.mrow{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;}
+/* ── METRIC CARDS ────────────────────────────────────────── */
+.mrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
 .mrow.c3{grid-template-columns:repeat(3,1fr);}
 .mrow.c4{grid-template-columns:repeat(4,1fr);}
-.mc{background:var(--gray50);border-radius:var(--r);padding:10px 11px;border:1px solid var(--bdr);}
-.mc .v{font-size:21px;font-weight:600;line-height:1;font-family:var(--mono);}
-.mc .l{font-size:10px;color:var(--muted);margin-top:3px;}
+.mrow.c5{grid-template-columns:repeat(5,1fr);}
+.mc{background:var(--surf);border-radius:var(--rl);padding:16px 18px;border:1px solid var(--bdr);box-shadow:var(--sh);}
+.mc .v{font-size:28px;font-weight:700;line-height:1;font-family:var(--mono);}
+.mc .l{font-size:11px;color:var(--muted);margin-top:5px;font-weight:500;}
 .mc.ok .v{color:var(--g600);}
 .mc.warn .v{color:var(--a500);}
 .mc.bad .v{color:var(--r500);}
 .mc.info .v{color:var(--b500);}
 .mc.purple .v{color:var(--p500);}
 
-/* BADGES */
-.bdg{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;}
+/* ── BADGES ──────────────────────────────────────────────── */
+.bdg{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;}
 .ok{background:var(--g50);color:var(--g600);border:1px solid var(--g200);}
 .warn{background:var(--a50);color:var(--a600);border:1px solid var(--a200);}
 .bad{background:var(--r50);color:var(--r500);border:1px solid var(--r200);}
@@ -82,100 +96,96 @@ body{font-family:var(--fn);background:var(--bg);color:var(--txt);font-size:14px;
 .gray{background:var(--gray100);color:var(--gray600);border:1px solid var(--gray200);}
 .purple{background:var(--p50);color:var(--p500);border:1px solid var(--p200);}
 
-/* FORMS */
-.fg{margin-bottom:9px;}
-.fr{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+/* ── FORMS ───────────────────────────────────────────────── */
+.fg{margin-bottom:12px;}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .fr.c3{grid-template-columns:1fr 1fr 1fr;}
-label{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:3px;}
-input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-family:var(--fn);font-size:13px;color:var(--txt);background:var(--surf);-webkit-appearance:none;}
+.fr.c4{grid-template-columns:repeat(4,1fr);}
+label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
+input,select,textarea{width:100%;padding:9px 12px;border:1px solid var(--bdr);border-radius:var(--r);font-family:var(--fn);font-size:13px;color:var(--txt);background:var(--surf);-webkit-appearance:none;transition:border-color .15s;}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(45,112,36,.1);}
-textarea{resize:vertical;min-height:55px;}
+textarea{resize:vertical;min-height:80px;}
 input[type=number]{font-family:var(--mono);}
 
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 14px;border-radius:var(--r);font-family:var(--fn);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;}
-.bp{background:var(--pri);color:#fff;}.bp:active{background:var(--g700);}
-.bs{background:var(--gray100);color:var(--gray700);border:1px solid var(--bdr);}.bs:active{background:var(--gray200);}
-.bd{background:var(--r50);color:var(--r500);border:1px solid var(--r200);}
-.bg-{background:var(--g50);color:var(--g600);border:1px solid var(--g200);}
-.bsm{padding:5px 9px;font-size:11px;}
+/* ── BUTTONS ─────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--r);font-family:var(--fn);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;}
+.bp{background:var(--pri);color:#fff;}.bp:hover{background:var(--g700);}
+.bs{background:var(--gray100);color:var(--gray700);border:1px solid var(--bdr);}.bs:hover{background:var(--gray200);}
+.bd{background:var(--r50);color:var(--r500);border:1px solid var(--r200);}.bd:hover{background:var(--r200);}
+.bg-{background:var(--g50);color:var(--g600);border:1px solid var(--g200);}.bg-:hover{background:var(--g100);}
+.bsm{padding:5px 10px;font-size:12px;}
 .bfull{width:100%;}
-.brow{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;}
+.brow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
 
-/* TABLE */
-.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r);border:1px solid var(--bdr);}
-table{width:100%;border-collapse:collapse;font-size:12px;}
-th{background:var(--gray50);padding:7px 9px;text-align:left;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--bdr);}
-td{padding:8px 9px;border-bottom:1px solid var(--bdr);vertical-align:middle;}
+/* ── CARDS ───────────────────────────────────────────────── */
+.card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rl);padding:20px;margin-bottom:14px;box-shadow:var(--sh);}
+.cf{background:var(--gray50);border:1px solid var(--bdr);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;}
+
+/* ── TABLE ───────────────────────────────────────────────── */
+.tw{overflow-x:auto;border-radius:var(--r);border:1px solid var(--bdr);background:var(--surf);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:var(--gray50);padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--bdr);}
+td{padding:11px 14px;border-bottom:1px solid var(--bdr);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
-tr:hover td{background:var(--gray50);}
+tr:hover td{background:#fafcf9;}
 
-/* PROGRESS */
-.pb{height:5px;background:var(--gray200);border-radius:3px;overflow:hidden;}
+/* ── PROGRESS ────────────────────────────────────────────── */
+.pb{height:6px;background:var(--gray200);border-radius:3px;overflow:hidden;}
 .pf{height:100%;border-radius:3px;}
 
-/* ALERT ROW */
-.ar{display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:var(--r);margin-bottom:5px;font-size:12px;}
+/* ── ALERT ROWS ──────────────────────────────────────────── */
+.ar{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:var(--r);margin-bottom:6px;font-size:13px;}
 .ar.ok{background:var(--g50);border:1px solid var(--g200);}
 .ar.warn{background:var(--a50);border:1px solid var(--a200);}
 .ar.bad{background:var(--r50);border:1px solid var(--r200);}
 .ar.info{background:var(--b50);border:1px solid var(--b200);}
-.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
 .dot.ok{background:var(--g500);}
 .dot.warn{background:var(--a500);}
 .dot.bad{background:var(--r500);}
 .dot.info{background:var(--b500);}
 
-/* STAFF */
-.scard{display:flex;align-items:center;gap:11px;padding:11px;background:var(--gray50);border-radius:var(--r);border:1px solid var(--bdr);margin-bottom:7px;}
-.sav{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;}
+/* ── STAFF ───────────────────────────────────────────────── */
+.scard{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--gray50);border-radius:var(--r);border:1px solid var(--bdr);margin-bottom:8px;}
+.sav{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
 
-/* LOT CARD */
-.lot-card{border-left:3px solid var(--g400);padding:10px 12px;background:var(--gray50);border-radius:0 var(--r) var(--r) 0;margin-bottom:7px;}
-.lot-title{font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:space-between;}
-.lot-range{font-size:11px;color:var(--muted);margin-top:2px;}
-.lot-count{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--pri);}
+/* ── LOT CARDS ───────────────────────────────────────────── */
+.lot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
 
-/* CHART */
-.cw{position:relative;width:100%;height:175px;margin:8px 0;}
+/* ── HEALTH ROWS ─────────────────────────────────────────── */
+.health-row{padding:14px 0;border-bottom:1px solid var(--bdr);display:flex;align-items:flex-start;gap:12px;}
+.health-row:last-child{border-bottom:none;}
+.health-meta{flex:1;}
+.health-title{font-weight:600;font-size:13px;}
+.health-sub{font-size:12px;color:var(--muted);margin-top:3px;}
 
-/* PROTO */
-.proto{border-left:3px solid var(--pri);padding:9px 11px;background:var(--gray50);border-radius:0 var(--r) var(--r) 0;margin-bottom:7px;}
-.proto-t{font-weight:600;font-size:12px;color:var(--pri);margin-bottom:3px;}
-.proto-b{font-size:11px;color:var(--muted);line-height:1.6;}
-
-/* INV CATEGORY TABS */
-.cat-tabs{display:flex;gap:4px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;}
-.ctab{padding:5px 10px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;cursor:pointer;border:1px solid var(--bdr);background:var(--gray50);color:var(--gray600);}
+/* ── INV CATEGORY TABS ───────────────────────────────────── */
+.cat-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.ctab{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;border:1px solid var(--bdr);background:var(--surf);color:var(--gray600);transition:all .12s;}
 .ctab.on{background:var(--pri);color:#fff;border-color:var(--pri);}
 
-/* MODALS */
-.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center;}
+/* ── CHART ───────────────────────────────────────────────── */
+.cw{position:relative;width:100%;height:200px;margin:10px 0;}
+
+/* ── MODALS — CENTERED for desktop ───────────────────────── */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:20px;}
 .mo.on{display:flex;}
-.mdl{background:var(--surf);border-radius:20px 20px 0 0;padding:18px 15px 30px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;}
-.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
-.mtitle{font-size:15px;font-weight:600;}
-.mclose{background:var(--gray100);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+.mdl{background:var(--surf);border-radius:16px;padding:24px 26px 28px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.mtitle{font-size:17px;font-weight:700;}
+.mclose{background:var(--gray100);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.mclose:hover{background:var(--gray200);}
 
-/* AI BOX */
-.ai-box{background:var(--prib);border:1px solid var(--g200);border-radius:var(--rl);padding:13px;font-size:12px;line-height:1.75;white-space:pre-wrap;margin-top:9px;}
+/* ── AI / REPORT OUTPUTS ─────────────────────────────────── */
+.ai-box{background:var(--prib);border:1px solid var(--g200);border-radius:var(--rl);padding:18px;font-size:13px;line-height:1.75;white-space:pre-wrap;margin-top:12px;}
+.rout{background:var(--gray50);border:1px solid var(--bdr);border-radius:var(--r);padding:18px;font-family:var(--mono);font-size:12px;line-height:1.7;white-space:pre-wrap;max-height:500px;overflow-y:auto;margin-top:12px;}
 
-/* REPORT OUTPUT */
-.rout{background:var(--gray50);border:1px solid var(--bdr);border-radius:var(--r);padding:13px;font-family:var(--mono);font-size:11px;line-height:1.7;white-space:pre-wrap;max-height:380px;overflow-y:auto;margin-top:9px;}
+/* ── PROTO ───────────────────────────────────────────────── */
+.proto{border-left:3px solid var(--pri);padding:12px 16px;background:var(--gray50);border-radius:0 var(--r) var(--r) 0;margin-bottom:8px;}
+.proto-t{font-weight:700;font-size:13px;color:var(--pri);margin-bottom:4px;}
+.proto-b{font-size:12px;color:var(--muted);line-height:1.6;}
 
-/* PRINT */
-@media print{
-  .bottom-nav,.topbar,.btn,.brow,.cat-tabs,.mclose,.no-print{display:none!important;}
-  body{background:#fff;font-size:12pt;}
-  .app{max-width:100%;box-shadow:none;}
-  .content{padding:0;}
-  .pane{display:block!important;}
-  .print-only{display:block!important;}
-  .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;}
-}
-.print-only{display:none;}
-
-/* UTILS */
+/* ── MISC ────────────────────────────────────────────────── */
 .fb{display:flex;align-items:center;justify-content:space-between;}
 .fg8{display:flex;align-items:center;gap:8px;}
 .mt4{margin-top:4px;}.mt8{margin-top:8px;}.mt12{margin-top:12px;}.mt16{margin-top:16px;}
@@ -183,38 +193,63 @@ tr:hover td{background:var(--gray50);}
 .mono{font-family:var(--mono);}
 .bold{font-weight:600;}
 .hidden{display:none!important;}
-.empty{text-align:center;padding:24px 16px;color:var(--muted);font-size:13px;}
-.sr{display:flex;gap:7px;margin-bottom:9px;}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;}
+.sr{display:flex;gap:8px;margin-bottom:12px;}
 .sr input{flex:1;}
-
-/* SPINNER */
-.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--g200);border-top-color:var(--pri);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:5px;}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:5px;}
 @keyframes sp{to{transform:rotate(360deg)}}
-
-/* TOAST */
-.toast{position:fixed;bottom:75px;left:50%;transform:translateX(-50%);background:var(--gray900);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;max-width:280px;text-align:center;}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--gray900);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;max-width:320px;box-shadow:0 4px 12px rgba(0,0,0,.2);}
 .toast.on{opacity:1;}
-
-/* SETTINGS */
-.setting-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--bdr);}
-.setting-row:last-child{border-bottom:none;}
-.sl{font-size:13px;font-weight:500;}
-.sd{font-size:11px;color:var(--muted);margin-top:2px;}
-
-/* WEIGHING ALERT */
-.weigh-alert{background:var(--b50);border:1px solid var(--b200);border-radius:var(--r);padding:8px 11px;display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px;}
-.wa-icon{font-size:16px;}
-
-/* NEXT WEIGH */
 .nw-chip{display:inline-flex;align-items:center;gap:4px;background:var(--b50);border:1px solid var(--b200);border-radius:20px;padding:2px 8px;font-size:10px;color:var(--b600);font-weight:500;}
 .nw-chip.due{background:var(--r50);border-color:var(--r200);color:var(--r500);}
 .nw-chip.ok{background:var(--g50);border-color:var(--g200);color:var(--g600);}
-
-/* LOT MOVEMENT */
-.move-log{font-size:11px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--bdr);}
+.move-log{font-size:12px;color:var(--muted);padding:7px 0;border-bottom:1px solid var(--bdr);}
 .move-log:last-child{border-bottom:none;}
+.weigh-alert{background:var(--b50);border:1px solid var(--b200);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:6px;font-size:13px;}
+.wa-icon{font-size:18px;}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--bdr);}
+.setting-row:last-child{border-bottom:none;}
+.admin-only{display:none;}
+.manager-up{display:none;}
 
-@media(min-width:500px){.app{box-shadow:0 0 40px rgba(0,0,0,.12);}}
+/* ── SUB-TABS ────────────────────────────────────────────── */
+.subtabs{display:flex;gap:4px;border-bottom:1px solid var(--bdr);margin-bottom:18px;overflow-x:auto;}
+.subtab{padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;}
+.subtab:hover{color:var(--pri);}
+.subtab.on{color:var(--pri);font-weight:600;border-bottom-color:var(--pri);}
+.subpane{display:none;}.subpane.on{display:block;}
+
+/* ── PRINT ───────────────────────────────────────────────── */
+@media print{
+  .sidebar,.topbar,.btn,.brow,.cat-tabs,.mclose,.no-print,#sync-banner{display:none!important;}
+  .content{margin:0;padding:0;}
+  .pane{display:block!important;}
+  .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;}
+}
+
+/* ── MOBILE RESPONSIVE (<768px) ─────────────────────────── */
+@media(max-width:768px){
+  :root{--sidebar-w:0px;--topbar-h:56px;}
+  .sidebar{transform:translateX(-230px);transition:transform .25s;width:230px;}
+  .sidebar.open{transform:translateX(0);}
+  .content{margin-left:0;padding:14px 14px 80px;}
+  .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--surf);border-top:1px solid var(--bdr);z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+  .ni{flex-direction:column;padding:7px 4px 5px;font-size:9px;}
+  .ni span{font-size:9px;margin-top:2px;}
+  .ni.on::before{display:none;}
+  .topbar{padding:0 14px;}
+  .topbar-stats{display:none;}
+  .topbar-divider{display:none;}
+  .mrow{grid-template-columns:repeat(2,1fr);}
+  .mrow.c5{grid-template-columns:repeat(3,1fr);}
+  .fr.c3,.fr.c4{grid-template-columns:1fr 1fr;}
+  .mdl{border-radius:20px 20px 0 0;max-width:100%;align-self:flex-end;}
+  .mo{align-items:flex-end;padding:0;}
+  .mc .v{font-size:20px;}
+  .lot-grid{grid-template-columns:1fr;}
+  .menu-toggle{display:flex;}
+}
+.menu-toggle{display:none;background:none;border:none;color:#fff;cursor:pointer;padding:4px;}
 </style>
 </head>
 <body>
@@ -273,23 +308,86 @@ tr:hover td{background:var(--gray50);}
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="topbar-row1">
-    <div>
-      <div class="topbar-farm" id="tb-farm">Loading...</div>
+  <div class="topbar-left">
+    <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="topbar-logo">🌿</div>
+    <div class="topbar-text">
+      <div class="topbar-farm" id="tb-farm">Feedlot Manager</div>
       <div class="topbar-sub" id="tb-sub">Farm Management System</div>
     </div>
-    <div class="topbar-date" id="tb-date"></div>
+    <div class="topbar-divider"></div>
+    <div class="topbar-stats">
+      <div class="ts-item"><strong id="ts-pop">–</strong> animals</div>
+      <div class="ts-item"><strong id="ts-ready">–</strong> sale ready</div>
+      <div class="ts-item"><strong id="ts-lots">–</strong> lots active</div>
+      <div class="ts-item"><strong id="ts-weigh">–</strong> weigh due</div>
+    </div>
   </div>
-  <div class="topbar-stats">
-    <div class="ts-item"><strong id="ts-pop">–</strong>animals</div>
-    <div class="ts-item"><strong id="ts-ready">–</strong>ready</div>
-    <div class="ts-item"><strong id="ts-lots">–</strong>lots active</div>
-    <div class="ts-item"><strong id="ts-weigh">–</strong>due weigh</div>
+  <div class="topbar-right">
+    <div class="topbar-date" id="tb-date"></div>
+    <div class="topbar-user-pill" onclick="SP(document.querySelector('.ni[data-p=more]'),'more')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span id="tb-user-name">Account</span>
+    </div>
   </div>
 </div>
 
 <!-- SYNC STATUS BANNER -->
-<div id="sync-banner" style="display:none;padding:8px 14px;font-size:12px;font-weight:500;border-bottom:1px solid;text-align:center;position:sticky;top:62px;z-index:99;"></div>
+<div id="sync-banner" style="display:none;padding:8px 14px;font-size:12px;font-weight:500;border-bottom:1px solid;text-align:center;position:fixed;top:58px;left:230px;right:0;z-index:99;"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-section">Main</div>
+  <button class="ni on" data-p="dash" onclick="SP(this,'dash')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>Dashboard</span>
+  </button>
+  <button class="ni" data-p="animals" onclick="SP(this,'animals')">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Animals</span>
+  </button>
+  <button class="ni" data-p="lots" onclick="SP(this,'lots')">
+    <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+    <span>Lots</span>
+  </button>
+  <div class="sidebar-section">Operations</div>
+  <button class="ni" data-p="health" onclick="SP(this,'health')">
+    <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    <span>Health schedule</span>
+  </button>
+  <button class="ni" data-p="feed" onclick="SP(this,'feed')">
+    <svg viewBox="0 0 24 24"><path d="M3 3h18v4H3z"/><path d="M3 10h18v4H3z"/><path d="M3 17h18v4H3z"/></svg>
+    <span>Feeding program</span>
+  </button>
+  <button class="ni" data-p="inv" onclick="SP(this,'inv')">
+    <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+    <span>Inventory</span>
+  </button>
+  <button class="ni" data-p="mortality" onclick="SP(this,'mortality')">
+    <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 2 7h10c0-2 2-4 2-7a7 7 0 0 0-7-7z"/><line x1="9" y1="22" x2="15" y2="22"/><line x1="10" y1="19" x2="14" y2="19"/></svg>
+    <span>Mortality</span>
+  </button>
+  <div class="sidebar-section">Reports &amp; Admin</div>
+  <button class="ni" data-p="rep" onclick="SP(this,'rep')">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <span>Reports</span>
+  </button>
+  <button class="ni" data-p="more" onclick="SP(this,'more')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>Settings &amp; Admin</span>
+  </button>
+  <div class="sidebar-bottom">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sb-avatar">–</div>
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--txt);" id="sb-name">–</div>
+        <div style="font-size:11px;color:var(--muted);" id="sb-role">–</div>
+      </div>
+    </div>
+  </div>
+</aside>
 
 <!-- CONTENT -->
 <div class="content">
@@ -345,31 +443,77 @@ tr:hover td{background:var(--gray50);}
     <div class="mc warn"><div class="v" id="lk-obs">–</div><div class="l">in lot 15</div></div>
   </div>
   <div class="sec">Lot breakdown</div>
-  <div id="lots-grid"></div>
+  <div id="lots-grid" class="lot-grid"></div>
   <div class="sec">Recent lot movements</div>
   <div id="move-log-list"></div>
 </div>
 
 <!-- HEALTH -->
 <div id="pane-health" class="pane">
-  <div class="mrow c3" style="gap:6px;">
-    <div class="mc bad"><div class="v" id="h-over">0</div><div class="l">overdue</div></div>
-    <div class="mc warn"><div class="v" id="h-due">0</div><div class="l">due 7 days</div></div>
-    <div class="mc ok"><div class="v" id="h-done">0</div><div class="l">completed</div></div>
+  <div class="page-header">
+    <div><div class="page-title">Health Records</div><div class="page-sub">Clinical treatments, deworming, vaccination &amp; scheduling</div></div>
   </div>
-  <div class="fb" style="margin-bottom:8px;">
-    <div class="sec" style="margin:0;">Schedule</div>
-    <button class="btn bp bsm" onclick="OM('m-add-h')">+ Event</button>
+  <div class="subtabs">
+    <button class="subtab on" onclick="switchHealthTab(this,'clinical')">Clinical / Treatment</button>
+    <button class="subtab" onclick="switchHealthTab(this,'deworming')">Deworming</button>
+    <button class="subtab" onclick="switchHealthTab(this,'vaccination')">Vaccination</button>
+    <button class="subtab" onclick="switchHealthTab(this,'schedule')">Schedule &amp; Protocols</button>
   </div>
-  <div class="sr">
-    <select id="hf-type" onchange="RH()" style="flex:1;"><option value="">All types</option><option>Deworming</option><option>Vaccination</option><option>Dipping / spraying</option><option>Veterinary check</option><option>Treatment</option><option>Vitamin supplement</option></select>
-    <select id="hf-st" onchange="RH()" style="width:110px;"><option value="">All</option><option value="overdue">Overdue</option><option value="due">Due soon</option><option value="upcoming">Upcoming</option><option value="done">Done</option></select>
+
+  <!-- CLINICAL -->
+  <div id="hsub-clinical" class="subpane on">
+    <div class="fb" style="margin-bottom:12px;"><div class="sec" style="margin:0;">Clinical &amp; treatment log</div><button class="btn bp bsm" onclick="OM(\'m-add-clinical\')">+ Treatment</button></div>
+    <div id="clinical-list"></div>
   </div>
-  <div id="h-list"></div>
-  <div class="sec" style="margin-top:14px;">Standard protocols</div>
-  <div class="proto"><div class="proto-t">Deworming rotation</div><div class="proto-b">Rotate every 4–6 weeks: Albendazole 10% → Levamisole HCl → Ivermectin. Dose strictly by body weight immediately after weighing. Never estimate — under-dosing drives anthelmintic resistance. Treat Lot 15 separately before reintroduction.</div></div>
-  <div class="proto"><div class="proto-t">Vaccination schedule</div><div class="proto-b">Entry: Clostridium perfringens D (pulpy kidney) + Pasteurellosis (Mannheimia haemolytica). Booster at 4 weeks. Annual boosters thereafter. Maintain cold chain 2–8°C. Record batch no. and expiry on every event card.</div></div>
-  <div class="proto"><div class="proto-t">Ectoparasite control</div><div class="proto-b">Amitraz (Triatix) every 6–8 weeks. Rotate annually with Cypermethrin. Weekly tick and lice checks during morning health rounds. Animals in Lot 15 must be treated before moving back to production lots.</div></div>
+
+  <!-- DEWORMING -->
+  <div id="hsub-deworming" class="subpane">
+    <div class="fb" style="margin-bottom:12px;"><div class="sec" style="margin:0;">Deworming log</div><button class="btn bp bsm" onclick="OM(\'m-add-deworming\')">+ Deworming</button></div>
+    <div id="deworming-list"></div>
+  </div>
+
+  <!-- VACCINATION -->
+  <div id="hsub-vaccination" class="subpane">
+    <div class="fb" style="margin-bottom:12px;"><div class="sec" style="margin:0;">Vaccination log</div><button class="btn bp bsm" onclick="OM(\'m-add-vaccination\')">+ Vaccination</button></div>
+    <div id="vaccination-list"></div>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div id="hsub-schedule" class="subpane">
+    <div class="mrow c3">
+      <div class="mc bad"><div class="v" id="h-over">0</div><div class="l">overdue</div></div>
+      <div class="mc warn"><div class="v" id="h-due">0</div><div class="l">due 7 days</div></div>
+      <div class="mc ok"><div class="v" id="h-done">0</div><div class="l">completed</div></div>
+    </div>
+    <div class="fb" style="margin-bottom:8px;"><div class="sec" style="margin:0;">Scheduled events</div><button class="btn bp bsm" onclick="OM(\'m-add-h\')">+ Event</button></div>
+    <div class="sr">
+      <select id="hf-type" onchange="RH()" style="flex:1;"><option value="">All types</option><option>Deworming</option><option>Vaccination</option><option>Dipping / spraying</option><option>Veterinary check</option><option>Treatment</option><option>Vitamin supplement</option></select>
+      <select id="hf-st" onchange="RH()" style="width:130px;"><option value="">All</option><option value="overdue">Overdue</option><option value="due">Due soon</option><option value="upcoming">Upcoming</option><option value="done">Done</option></select>
+    </div>
+    <div id="h-list"></div>
+    <div class="sec" style="margin-top:18px;">Standard protocols</div>
+    <div class="proto"><div class="proto-t">Deworming rotation</div><div class="proto-b">Rotate every 4–6 weeks: Albendazole 10% → Levamisole HCl → Ivermectin. Dose strictly by body weight immediately after weighing. Observe withdrawal period (21 days) before slaughter.</div></div>
+    <div class="proto"><div class="proto-t">Vaccination schedule</div><div class="proto-b">Entry: Clostridial (pulpy kidney) + CCPP + Blantrax. Booster at 4 weeks. Annual boosters thereafter. Maintain cold chain 2–8°C. Record batch no. on every event.</div></div>
+    <div class="proto"><div class="proto-t">Ectoparasite control</div><div class="proto-b">Amitraz (Triatix) every 6–8 weeks. Weekly tick and lice checks during morning health rounds.</div></div>
+  </div>
+</div>
+
+<!-- MORTALITY -->
+<div id="pane-mortality" class="pane">
+  <div class="page-header">
+    <div><div class="page-title">Mortality Records</div><div class="page-sub">Death register with cause, symptoms &amp; post-mortem tracking</div></div>
+    <button class="btn bp" onclick="OM(\'m-add-mortality\')">+ Record death</button>
+  </div>
+  <div class="mrow c4">
+    <div class="mc bad"><div class="v" id="mort-total">0</div><div class="l">total deaths</div></div>
+    <div class="mc warn"><div class="v" id="mort-month">0</div><div class="l">this month</div></div>
+    <div class="mc info"><div class="v" id="mort-pm">0</div><div class="l">post-mortems done</div></div>
+    <div class="mc"><div class="v" id="mort-rate">0%</div><div class="l">mortality rate</div></div>
+  </div>
+  <div class="sec">Top causes of death</div>
+  <div class="cw" style="height:180px;"><canvas id="mort-chart" role="img" aria-label="Causes of death chart">Causes of death</canvas></div>
+  <div class="sec">Death register</div>
+  <div id="mortality-list"></div>
 </div>
 
 <!-- INVENTORY -->
@@ -455,6 +599,10 @@ tr:hover td{background:var(--gray50);}
         <option value="weekly">Weekly summary</option>
         <option value="moves">Lot movement history</option>
         <option value="sales">Animals sold report</option>
+        <option value="clinical">Clinical / treatment log</option>
+        <option value="deworming">Deworming log</option>
+        <option value="vaccination">Vaccination log</option>
+        <option value="mortality">Mortality report</option>
       </select>
     </div>
     <div class="fr">
@@ -703,6 +851,55 @@ tr:hover td{background:var(--gray50);}
   </div>
 </div>
 
+
+<!-- ADD CLINICAL -->
+<div class="mo" id="m-add-clinical">
+  <div class="mdl">
+    <div class="mhdr"><div class="mtitle">Record treatment</div><button class="mclose" onclick="CM('m-add-clinical')">&#x2715;</button></div>
+    <div class="fr"><div class="fg"><label>Date</label><input type="date" id="cl-date"></div><div class="fg"><label>Animal ID / Tag</label><input id="cl-animal" placeholder="e.g. 151"></div></div>
+    <div class="fg"><label>Diagnosis</label><input id="cl-diag" placeholder="e.g. Orf, Salmonellosis, Diarrhoea"></div>
+    <div class="fg"><label>Treatment given</label><textarea id="cl-treat" style="min-height:50px;" placeholder="e.g. 4ml Penstrep (i.m) + Iodine"></textarea></div>
+    <div class="fr"><div class="fg"><label>Administered by</label><input id="cl-by" placeholder="Name"></div><div class="fg"><label>Remarks</label><input id="cl-remarks" placeholder="Optional"></div></div>
+    <button class="btn bp bfull mt8" onclick="saveClinical()">Save treatment</button>
+  </div>
+</div>
+
+<!-- ADD DEWORMING -->
+<div class="mo" id="m-add-deworming">
+  <div class="mdl">
+    <div class="mhdr"><div class="mtitle">Record deworming</div><button class="mclose" onclick="CM('m-add-deworming')">&#x2715;</button></div>
+    <div class="fr"><div class="fg"><label>Date</label><input type="date" id="dw-date"></div><div class="fg"><label>No. of animals</label><input type="number" id="dw-num" placeholder="e.g. 180"></div></div>
+    <div class="fr"><div class="fg"><label>Lot</label><input id="dw-lot" value="ALL" placeholder="e.g. ALL"></div><div class="fg"><label>Drug used</label><input id="dw-drug" placeholder="e.g. Ivermectin injection"></div></div>
+    <div class="fr c3"><div class="fg"><label>Dosage</label><input id="dw-dose" placeholder="e.g. 2ml"></div><div class="fg"><label>Route</label><input id="dw-route" placeholder="e.g. S.C"></div><div class="fg"><label>Withdrawal period</label><input id="dw-withdrawal" value="21 days" placeholder="e.g. 21 days"></div></div>
+    <button class="btn bp bfull mt8" onclick="saveDeworming()">Save deworming</button>
+  </div>
+</div>
+
+<!-- ADD VACCINATION -->
+<div class="mo" id="m-add-vaccination">
+  <div class="mdl">
+    <div class="mhdr"><div class="mtitle">Record vaccination</div><button class="mclose" onclick="CM('m-add-vaccination')">&#x2715;</button></div>
+    <div class="fr"><div class="fg"><label>Date</label><input type="date" id="vc-date"></div><div class="fg"><label>Lot No</label><input id="vc-lot" placeholder="e.g. 1 & 2"></div></div>
+    <div class="fr"><div class="fg"><label>Number vaccinated</label><input type="number" id="vc-num" placeholder="e.g. 180"></div><div class="fg"><label>Vaccine name</label><input id="vc-name" placeholder="e.g. Blantrax, CCPP, Clostridial"></div></div>
+    <div class="fr c3"><div class="fg"><label>Batch No</label><input id="vc-batch" placeholder="e.g. 79062025"></div><div class="fg"><label>Dosage</label><input id="vc-dose" placeholder="e.g. 2ml"></div><div class="fg"><label>Route</label><input id="vc-route" placeholder="e.g. S.C"></div></div>
+    <div class="fg"><label>Administered by</label><input id="vc-by" placeholder="Name"></div>
+    <button class="btn bp bfull mt8" onclick="saveVaccination()">Save vaccination</button>
+  </div>
+</div>
+
+<!-- ADD MORTALITY -->
+<div class="mo" id="m-add-mortality">
+  <div class="mdl">
+    <div class="mhdr"><div class="mtitle">Record death</div><button class="mclose" onclick="CM('m-add-mortality')">&#x2715;</button></div>
+    <div class="fr"><div class="fg"><label>Date</label><input type="date" id="mo-date"></div><div class="fg"><label>Tag No</label><input id="mo-tag" placeholder="e.g. 74"></div></div>
+    <div class="fr c3"><div class="fg"><label>Age</label><input id="mo-age" placeholder="e.g. 8 months"></div><div class="fg"><label>Sex</label><select id="mo-sex"><option>Male</option><option>Female</option></select></div><div class="fg"><label>Breed</label><input id="mo-breed" value="Dorper" placeholder="e.g. Dorper"></div></div>
+    <div class="fg"><label>Cause of death</label><input id="mo-cause" placeholder="e.g. Haemonchosis, Severe Pneumonia"></div>
+    <div class="fg"><label>Symptoms</label><input id="mo-symptoms" placeholder="e.g. Sudden death, Diarrhoea"></div>
+    <div class="fg"><label>Post-mortem done?</label><select id="mo-pm"><option>Yes</option><option>No</option></select></div>
+    <button class="btn bp bfull mt8" onclick="saveMortality()">Save death record</button>
+  </div>
+</div>
+
 </div><!-- /app -->
 <script>
 'use strict';
@@ -736,7 +933,7 @@ var SUPA_URL = 'https://wcfyzytnsexzbmhusuvj.supabase.co';
 var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjZnl6eXRuc2V4emJtaHVzdXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MzQ2OTIsImV4cCI6MjA5NTIxMDY5Mn0.APqLSm1FqQfnT4jupAUlV39la1fYIpLaTdos3NJJw4k';
 var CONFIGURED = true; // credentials hard-coded
 
-var DB={animals:[],staff:[],health:[],inventory:[],feedProgram:null}, SET={}, detChart=null, dshChart=null, curTag=null, moveLog=[];
+var DB={animals:[],staff:[],health:[],inventory:[],feedProgram:null,clinical:[],deworming:[],vaccination:[],mortality:[]}, SET={}, detChart=null, dshChart=null, curTag=null, moveLog=[];
 var DB_LOADED = false;
 var SYNC_QUEUE = [];
 
@@ -814,7 +1011,7 @@ async function loadFromCloud(){
   showBanner('info','Connecting to database…');
   try{
     // Load all tables in parallel
-    var [settingsR, animalsR, weightsR, healthR, invR, staffR, movesR, feedPR, feedSR] = await Promise.all([
+    var [settingsR, animalsR, weightsR, healthR, invR, staffR, movesR, feedPR, feedSR, clinicalR, dewormingR, vaccinationR, mortalityR] = await Promise.all([
       sbGet('farm_settings','select=*'),
       sbGet('animals','select=*&order=tag.asc'),
       sbGet('weight_records','select=*&order=weigh_date.asc'),
@@ -823,13 +1020,17 @@ async function loadFromCloud(){
       sbGet('staff','select=*&order=name.asc'),
       sbGet('lot_movements','select=*&order=created_at.desc'),
       sbGet('feed_program','select=*&order=lot_num.asc'),
-      sbGet('feed_status','select=*')
+      sbGet('feed_status','select=*'),
+      sbGet('clinical_records','select=*&order=record_date.desc'),
+      sbGet('deworming_records','select=*&order=record_date.desc'),
+      sbGet('vaccination_records','select=*&order=record_date.desc'),
+      sbGet('mortality_records','select=*&order=record_date.desc')
     ]);
 
     if(!animalsR){ showBanner('bad','Database connection failed. Check your URL and key.'); return false; }
 
     // Assemble DB — ensure DB object exists
-    if(!DB) DB={animals:[],staff:[],health:[],inventory:[],feedProgram:null};
+    if(!DB) DB={animals:[],staff:[],health:[],inventory:[],feedProgram:null,clinical:[],deworming:[],vaccination:[],mortality:[]};
     var weightsByTag = {};
     (weightsR||[]).forEach(function(w){
       if(!weightsByTag[w.tag]) weightsByTag[w.tag] = [];
@@ -874,6 +1075,12 @@ async function loadFromCloud(){
       return {tag:m.tag,from:m.from_lot,to:m.to_lot,wt:parseFloat(m.weight_kg)||0,
         reason:m.reason||'',date:m.move_date||today(),id:m.id};
     });
+
+    // New record types
+    if(clinicalR) DB.clinical = clinicalR.map(function(r){return {id:r.id,date:r.record_date,animalId:r.animal_id||'',diagnosis:r.diagnosis||'',treatment:r.treatment||'',by:r.administered_by||'',remarks:r.remarks||''};});
+    if(dewormingR) DB.deworming = dewormingR.map(function(r){return {id:r.id,date:r.record_date,numAnimals:r.num_animals||0,lot:r.lot||'ALL',drug:r.drug_used||'',dosage:r.dosage||'',route:r.route||'',withdrawal:r.withdrawal_period||''};});
+    if(vaccinationR) DB.vaccination = vaccinationR.map(function(r){return {id:r.id,date:r.record_date,lotNo:r.lot_no||'',numVaccinated:r.num_vaccinated||0,vaccine:r.vaccine_name||'',batch:r.batch_no||'',dosage:r.dosage||'',route:r.route||'',by:r.administered_by||''};});
+    if(mortalityR) DB.mortality = mortalityR.map(function(r){return {id:r.id,date:r.record_date,tag:r.tag_no||'',age:r.age||'',sex:r.sex||'',breed:r.breed||'',cause:r.cause_of_death||'',symptoms:r.symptoms||'',postMortem:r.post_mortem||'No'};});
 
     // Feed program
     var rations = {};
@@ -1071,8 +1278,42 @@ function defaults(){
       {name:'Engine oil',cat:'Machinery — lubricants',unit:'litres',stock:8,daily:0,reorder:4,cost:600,supplier:'Total Kenya'},
       {name:'Feedlot overalls',cat:'Supplies — PPE',unit:'pieces',stock:6,daily:0,reorder:2,cost:1500,supplier:'Local supplier'},
       {name:'Disinfectant (Virkon)',cat:'Health — disinfectant',unit:'kg',stock:3,daily:0,reorder:1,cost:2200,supplier:'Coopers Kenya'},
+      {name:'Spray race',cat:'Supplies — tools',unit:'pieces',stock:1,daily:0,reorder:1,cost:0,supplier:''},
+      {name:'Banga (panga)',cat:'Supplies — tools',unit:'pieces',stock:3,daily:0,reorder:1,cost:0,supplier:''},
+      {name:'Spades',cat:'Supplies — tools',unit:'pieces',stock:3,daily:0,reorder:1,cost:0,supplier:''},
+      {name:'Masks',cat:'Supplies — PPE',unit:'pieces',stock:4,daily:0,reorder:2,cost:0,supplier:''},
+      {name:'Goggles',cat:'Supplies — PPE',unit:'pieces',stock:4,daily:0,reorder:2,cost:0,supplier:''},
+      {name:'File',cat:'Supplies — general',unit:'pieces',stock:1,daily:0,reorder:1,cost:0,supplier:''},
+      {name:'Iodine',cat:'Health — disinfectant',unit:'litres',stock:0.2,daily:0,reorder:0.1,cost:0,supplier:''},
+      {name:'Table',cat:'Supplies — general',unit:'pieces',stock:1,daily:0,reorder:1,cost:0,supplier:''},
     ],
-    feedProgram:{rations:defaultRations,palatability:'excellent',water:'optimal',observations:'',lastSaved:''}
+    feedProgram:{rations:defaultRations,palatability:'excellent',water:'optimal',observations:'',lastSaved:''},
+    clinical:[
+      {id:'c1',date:'2026-02-13',animalId:'151',diagnosis:'Orf',treatment:'4ml Penstrep (i.m) + Iodine',by:'Justine',remarks:''},
+      {id:'c2',date:'2026-02-14',animalId:'123',diagnosis:'Salmonellosis',treatment:'Procaben + Light Kaolin',by:'Justine',remarks:''},
+      {id:'c3',date:'2026-02-15',animalId:'120',diagnosis:'Diarrhoea',treatment:'Electrolytes + P80 Caben + Thaolin',by:'Justine',remarks:''},
+      {id:'c4',date:'2026-02-15',animalId:'97',diagnosis:'Diarrhoea',treatment:'Electrolytes + P80 Caben + Thaolin',by:'Justine',remarks:''},
+      {id:'c5',date:'2026-02-15',animalId:'139',diagnosis:'Diarrhoea',treatment:'Electrolytes + P80 Caben + Thaolin',by:'Justine',remarks:''},
+      {id:'c6',date:'2026-02-15',animalId:'116',diagnosis:'Diarrhoea',treatment:'Electrolytes + P80 Caben + Thaolin',by:'Justine',remarks:''}
+    ],
+    deworming:[
+      {id:'d1',date:'2026-02-01',numAnimals:180,lot:'ALL',drug:'Ivermectin injection',dosage:'2ml',route:'S.C',withdrawal:'21 days'},
+      {id:'d2',date:'2026-03-04',numAnimals:165,lot:'ALL',drug:'Albendazole / Ivermectin',dosage:'2ml each',route:'Oral, I.M & S.C',withdrawal:'21 days'},
+      {id:'d3',date:'2026-04-18',numAnimals:157,lot:'ALL',drug:'Levafastion',dosage:'2ml + 3ml',route:'Oral & i.m',withdrawal:'21 days'}
+    ],
+    vaccination:[
+      {id:'v1',date:'2026-02-07',lotNo:'1 & 2',numVaccinated:180,vaccine:'Blantrax',batch:'79062025',dosage:'2ml',route:'S.C',by:'Ruth'},
+      {id:'v2',date:'2026-02-07',lotNo:'1 & 2',numVaccinated:180,vaccine:'CCPP',batch:'',dosage:'',route:'',by:'Ruth'},
+      {id:'v3',date:'2026-02-10',lotNo:'1 & 2',numVaccinated:178,vaccine:'Clostridial',batch:'AKD1425',dosage:'1ml',route:'S.C',by:'Ruth'}
+    ],
+    mortality:[
+      {id:'m1',date:'2026-04-14',tag:'74',age:'',sex:'Male',breed:'Dorper',cause:'Haemonchosis',symptoms:'Sudden death',postMortem:'Yes'},
+      {id:'m2',date:'2026-04-17',tag:'175',age:'',sex:'Male',breed:'Dorper',cause:'Haemonchosis',symptoms:'Diarrhoea, sudden death',postMortem:'Yes'},
+      {id:'m3',date:'2026-04-22',tag:'69',age:'',sex:'Male',breed:'Dorper',cause:'Severe Pneumonia',symptoms:'Sudden death',postMortem:'Yes'},
+      {id:'m4',date:'2026-04-25',tag:'16',age:'',sex:'Male',breed:'Dorper',cause:'Severe anaemia',symptoms:'Recumbency',postMortem:'Yes'},
+      {id:'m5',date:'2026-04-26',tag:'156',age:'',sex:'Male',breed:'Dorper',cause:'Respiratory distress',symptoms:'Sudden death',postMortem:'Yes'},
+      {id:'m6',date:'2026-05-07',tag:'122',age:'',sex:'Male',breed:'Dorper',cause:'Recumbency',symptoms:'Sudden death',postMortem:'Yes'}
+    ]
   };
 }
 
@@ -1188,8 +1429,8 @@ function RD(){
   var weighDue=act.filter(function(a){var d=daysUntilWeigh(a);return d!==null&&d<=7;});
 
   // topbar
-  document.getElementById('tb-farm').textContent=SET.name||'My Farm';
-  document.getElementById('tb-sub').textContent=(SET.owner||'Farm Manager')+' · '+SET.location;
+  document.getElementById('tb-farm').textContent=SET.name||'Feedlot Manager';
+  document.getElementById('tb-sub').textContent=SET.name||'Farm Management System';
   document.getElementById('tb-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
   document.getElementById('ts-pop').textContent=act.length;
   document.getElementById('ts-ready').textContent=ready.length;
@@ -1581,6 +1822,7 @@ function RL(){
   document.getElementById('lk-moves').textContent=todayMoves;
   document.getElementById('lk-obs').textContent=obs;
   var lg=document.getElementById('lots-grid');
+  lg.className='lot-grid';
   lg.innerHTML=LOT_CONFIG.map(function(lc){
     var animals=act.filter(function(a){return a.lot===lc.num;});
     var cnt=animals.length;
@@ -1891,6 +2133,148 @@ function buildFeedingProgramText(act){
 }
 
 // ============================================================
+// ============================================================
+// HEALTH SUB-TABS, CLINICAL, DEWORMING, VACCINATION, MORTALITY
+// ============================================================
+function switchHealthTab(btn, sub){
+  document.querySelectorAll('#pane-health .subtab').forEach(function(b){b.classList.remove('on');});
+  document.querySelectorAll('#pane-health .subpane').forEach(function(p){p.classList.remove('on');});
+  btn.classList.add('on');
+  document.getElementById('hsub-'+sub).classList.add('on');
+  if(sub==='clinical')RClinical();
+  else if(sub==='deworming')RDeworming();
+  else if(sub==='vaccination')RVaccination();
+  else if(sub==='schedule')RH();
+}
+
+// ── CLINICAL ────────────────────────────────────────────────
+function RClinical(){
+  var el=document.getElementById('clinical-list');
+  if(!el)return;
+  var list=(DB.clinical||[]).slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  if(!list.length){el.innerHTML='<div class="empty">No clinical records yet</div>';return;}
+  el.innerHTML='<div class="tw"><table><thead><tr><th>Date</th><th>Animal ID</th><th>Diagnosis</th><th>Treatment given</th><th>By</th><th>Remarks</th><th></th></tr></thead><tbody>'+
+    list.map(function(r){
+      return '<tr><td>'+fd(r.date)+'</td><td class="bold">'+(r.animalId||'–')+'</td><td>'+(r.diagnosis||'–')+'</td><td>'+(r.treatment||'–')+'</td><td>'+(r.by||'–')+'</td><td class="muted">'+(r.remarks||'–')+'</td><td><button class="btn bsm bd" onclick="delClinical(\''+r.id+'\')">Delete</button></td></tr>';
+    }).join('')+'</tbody></table></div>';
+}
+function saveClinical(){
+  var date=document.getElementById('cl-date').value;
+  if(!date){toast('Enter a date');return;}
+  var rec={id:'c'+Date.now(),date:date,animalId:document.getElementById('cl-animal').value,diagnosis:document.getElementById('cl-diag').value,treatment:document.getElementById('cl-treat').value,by:document.getElementById('cl-by').value,remarks:document.getElementById('cl-remarks').value};
+  DB.clinical.push(rec); save();
+  if(CONFIGURED) sbPost('clinical_records',{record_date:rec.date,animal_id:rec.animalId,diagnosis:rec.diagnosis,treatment:rec.treatment,administered_by:rec.by,remarks:rec.remarks});
+  CM('m-add-clinical'); toast('Treatment recorded');
+  ['cl-animal','cl-diag','cl-treat','cl-by','cl-remarks'].forEach(function(id){document.getElementById(id).value='';});
+  RClinical();
+}
+function delClinical(id){
+  if(!confirm('Delete this treatment record?'))return;
+  DB.clinical=DB.clinical.filter(function(r){return r.id!==id;}); save(); RClinical(); toast('Deleted');
+}
+
+// ── DEWORMING ───────────────────────────────────────────────
+function RDeworming(){
+  var el=document.getElementById('deworming-list');
+  if(!el)return;
+  var list=(DB.deworming||[]).slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  if(!list.length){el.innerHTML='<div class="empty">No deworming records yet</div>';return;}
+  el.innerHTML='<div class="tw"><table><thead><tr><th>Date</th><th>No. animals</th><th>Lot</th><th>Drug used</th><th>Dosage</th><th>Route</th><th>Withdrawal</th><th></th></tr></thead><tbody>'+
+    list.map(function(r){
+      return '<tr><td>'+fd(r.date)+'</td><td class="bold">'+(r.numAnimals||'–')+'</td><td>'+(r.lot||'–')+'</td><td>'+(r.drug||'–')+'</td><td>'+(r.dosage||'–')+'</td><td>'+(r.route||'–')+'</td><td><span class="bdg warn">'+(r.withdrawal||'–')+'</span></td><td><button class="btn bsm bd" onclick="delDeworming(\''+r.id+'\')">Delete</button></td></tr>';
+    }).join('')+'</tbody></table></div>';
+}
+function saveDeworming(){
+  var date=document.getElementById('dw-date').value;
+  if(!date){toast('Enter a date');return;}
+  var rec={id:'d'+Date.now(),date:date,numAnimals:parseInt(document.getElementById('dw-num').value)||0,lot:document.getElementById('dw-lot').value,drug:document.getElementById('dw-drug').value,dosage:document.getElementById('dw-dose').value,route:document.getElementById('dw-route').value,withdrawal:document.getElementById('dw-withdrawal').value};
+  DB.deworming.push(rec); save();
+  if(CONFIGURED) sbPost('deworming_records',{record_date:rec.date,num_animals:rec.numAnimals,lot:rec.lot,drug_used:rec.drug,dosage:rec.dosage,route:rec.route,withdrawal_period:rec.withdrawal});
+  CM('m-add-deworming'); toast('Deworming recorded');
+  ['dw-num','dw-drug','dw-dose'].forEach(function(id){document.getElementById(id).value='';});
+  RDeworming();
+}
+function delDeworming(id){
+  if(!confirm('Delete this deworming record?'))return;
+  DB.deworming=DB.deworming.filter(function(r){return r.id!==id;}); save(); RDeworming(); toast('Deleted');
+}
+
+// ── VACCINATION ─────────────────────────────────────────────
+function RVaccination(){
+  var el=document.getElementById('vaccination-list');
+  if(!el)return;
+  var list=(DB.vaccination||[]).slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  if(!list.length){el.innerHTML='<div class="empty">No vaccination records yet</div>';return;}
+  el.innerHTML='<div class="tw"><table><thead><tr><th>Date</th><th>Lot No</th><th>No. vacc.</th><th>Vaccine</th><th>Batch No</th><th>Dosage</th><th>Route</th><th>By</th><th></th></tr></thead><tbody>'+
+    list.map(function(r){
+      return '<tr><td>'+fd(r.date)+'</td><td>'+(r.lotNo||'–')+'</td><td class="bold">'+(r.numVaccinated||'–')+'</td><td>'+(r.vaccine||'–')+'</td><td class="mono">'+(r.batch||'–')+'</td><td>'+(r.dosage||'–')+'</td><td>'+(r.route||'–')+'</td><td>'+(r.by||'–')+'</td><td><button class="btn bsm bd" onclick="delVaccination(\''+r.id+'\')">Delete</button></td></tr>';
+    }).join('')+'</tbody></table></div>';
+}
+function saveVaccination(){
+  var date=document.getElementById('vc-date').value;
+  if(!date){toast('Enter a date');return;}
+  var rec={id:'v'+Date.now(),date:date,lotNo:document.getElementById('vc-lot').value,numVaccinated:parseInt(document.getElementById('vc-num').value)||0,vaccine:document.getElementById('vc-name').value,batch:document.getElementById('vc-batch').value,dosage:document.getElementById('vc-dose').value,route:document.getElementById('vc-route').value,by:document.getElementById('vc-by').value};
+  DB.vaccination.push(rec); save();
+  if(CONFIGURED) sbPost('vaccination_records',{record_date:rec.date,lot_no:rec.lotNo,num_vaccinated:rec.numVaccinated,vaccine_name:rec.vaccine,batch_no:rec.batch,dosage:rec.dosage,route:rec.route,administered_by:rec.by});
+  CM('m-add-vaccination'); toast('Vaccination recorded');
+  ['vc-num','vc-name','vc-batch','vc-dose'].forEach(function(id){document.getElementById(id).value='';});
+  RVaccination();
+}
+function delVaccination(id){
+  if(!confirm('Delete this vaccination record?'))return;
+  DB.vaccination=DB.vaccination.filter(function(r){return r.id!==id;}); save(); RVaccination(); toast('Deleted');
+}
+
+// ── MORTALITY ───────────────────────────────────────────────
+var mortChart=null;
+function RMort(){
+  var list=(DB.mortality||[]).slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  var now=new Date();
+  var thisMonth=list.filter(function(r){var d=new Date(r.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}).length;
+  var pmDone=list.filter(function(r){return r.postMortem==='Yes';}).length;
+  var activeTotal=DB.animals.filter(function(a){return a.status!=='sold';}).length;
+  var rate=activeTotal>0?((list.length/(activeTotal+list.length))*100).toFixed(1):'0';
+  document.getElementById('mort-total').textContent=list.length;
+  document.getElementById('mort-month').textContent=thisMonth;
+  document.getElementById('mort-pm').textContent=pmDone;
+  document.getElementById('mort-rate').textContent=rate+'%';
+
+  // Causes chart
+  var causes={};
+  list.forEach(function(r){var cz=r.cause||'Unknown';causes[cz]=(causes[cz]||0)+1;});
+  var labels=Object.keys(causes), data=labels.map(function(l){return causes[l];});
+  if(mortChart)mortChart.destroy();
+  var ctx=document.getElementById('mort-chart');
+  if(ctx&&labels.length){
+    mortChart=new Chart(ctx.getContext('2d'),{type:'bar',data:{labels:labels,datasets:[{data:data,backgroundColor:['#dc2626','#d4920a','#3b82f6','#7c3aed','#2d7024','#b91c1c'],borderWidth:0,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{stepSize:1,font:{size:10}}}}}});
+  }
+
+  var el=document.getElementById('mortality-list');
+  if(!list.length){el.innerHTML='<div class="empty">No mortality records</div>';return;}
+  el.innerHTML='<div class="tw"><table><thead><tr><th>Date</th><th>Tag</th><th>Age</th><th>Sex</th><th>Breed</th><th>Cause of death</th><th>Symptoms</th><th>Post-mortem</th><th></th></tr></thead><tbody>'+
+    list.map(function(r){
+      return '<tr><td>'+fd(r.date)+'</td><td class="bold">'+(r.tag||'–')+'</td><td>'+(r.age||'–')+'</td><td>'+(r.sex||'–')+'</td><td>'+(r.breed||'–')+'</td><td><span class="bdg bad">'+(r.cause||'–')+'</span></td><td class="muted">'+(r.symptoms||'–')+'</td><td>'+(r.postMortem==='Yes'?'<span class="bdg ok">Yes</span>':'<span class="bdg gray">No</span>')+'</td><td><button class="btn bsm bd" onclick="delMortality(\''+r.id+'\')">Delete</button></td></tr>';
+    }).join('')+'</tbody></table></div>';
+}
+function saveMortality(){
+  var date=document.getElementById('mo-date').value;
+  if(!date){toast('Enter a date');return;}
+  var rec={id:'m'+Date.now(),date:date,tag:document.getElementById('mo-tag').value,age:document.getElementById('mo-age').value,sex:document.getElementById('mo-sex').value,breed:document.getElementById('mo-breed').value,cause:document.getElementById('mo-cause').value,symptoms:document.getElementById('mo-symptoms').value,postMortem:document.getElementById('mo-pm').value};
+  DB.mortality.push(rec); save();
+  if(CONFIGURED) sbPost('mortality_records',{record_date:rec.date,tag_no:rec.tag,age:rec.age,sex:rec.sex,breed:rec.breed,cause_of_death:rec.cause,symptoms:rec.symptoms,post_mortem:rec.postMortem});
+  // Auto-mark animal as dead if tag matches
+  var animal=DB.animals.find(function(a){return a.tag===rec.tag&&a.status!=='sold';});
+  if(animal){animal.status='dead'; if(CONFIGURED)cloudSaveAnimal(animal);}
+  CM('m-add-mortality'); toast('Death recorded');
+  ['mo-tag','mo-age','mo-cause','mo-symptoms'].forEach(function(id){document.getElementById(id).value='';});
+  RMort(); RD();
+}
+function delMortality(id){
+  if(!confirm('Delete this mortality record?'))return;
+  DB.mortality=DB.mortality.filter(function(r){return r.id!==id;}); save(); RMort(); toast('Deleted');
+}
+
+// ============================================================
 // INVENTORY
 // ============================================================
 var invCat='';
@@ -2191,6 +2575,21 @@ function GR(mode){
   } else if(type==='moves'){
     out=farmHeader('Lot Movement History',date,by)+
       (moveLog.length?moveLog.map(function(m){return fd(m.date)+' | '+m.tag+' | Lot '+m.from+' → Lot '+m.to+' | '+m.wt.toFixed(1)+' kg | '+m.reason;}).join('\n'):'No lot movements recorded')+'\n\n'+sep+'\nGenerated: '+new Date().toLocaleString();
+  } else if(type==='clinical'){
+    out=farmHeader('Clinical / Treatment Log',date,by)+
+      (DB.clinical||[]).map(function(r){return fd(r.date)+' | Animal '+r.animalId+'\n  Diagnosis: '+r.diagnosis+'\n  Treatment: '+r.treatment+'\n  By: '+r.by+(r.remarks?' | Remarks: '+r.remarks:'');}).join('\n\n')+'\n\n'+sep+'\nTotal records: '+(DB.clinical||[]).length+'\nGenerated: '+new Date().toLocaleString();
+  } else if(type==='deworming'){
+    out=farmHeader('Deworming Log',date,by)+
+      (DB.deworming||[]).map(function(r){return fd(r.date)+' | '+r.numAnimals+' animals | Lot '+r.lot+'\n  Drug: '+r.drug+' | Dosage: '+r.dosage+' | Route: '+r.route+'\n  Withdrawal period: '+r.withdrawal;}).join('\n\n')+'\n\n'+sep+'\nTotal records: '+(DB.deworming||[]).length+'\nGenerated: '+new Date().toLocaleString();
+  } else if(type==='vaccination'){
+    out=farmHeader('Vaccination Log',date,by)+
+      (DB.vaccination||[]).map(function(r){return fd(r.date)+' | Lot '+r.lotNo+' | '+r.numVaccinated+' vaccinated\n  Vaccine: '+r.vaccine+' | Batch: '+(r.batch||'\u2013')+'\n  Dosage: '+r.dosage+' | Route: '+r.route+' | By: '+r.by;}).join('\n\n')+'\n\n'+sep+'\nTotal records: '+(DB.vaccination||[]).length+'\nGenerated: '+new Date().toLocaleString();
+  } else if(type==='mortality'){
+    var ml=DB.mortality||[];
+    var causes={};ml.forEach(function(r){causes[r.cause||'Unknown']=(causes[r.cause||'Unknown']||0)+1;});
+    out=farmHeader('Mortality Report',date,by)+
+      'SUMMARY\n\u2022 Total deaths: '+ml.length+'\n\u2022 Post-mortems done: '+ml.filter(function(r){return r.postMortem==='Yes';}).length+'\n\nCAUSES OF DEATH\n'+Object.keys(causes).map(function(cz){return '\u2022 '+cz+': '+causes[cz];}).join('\n')+'\n\n'+sep+'\nINDIVIDUAL RECORDS\n\n'+
+      ml.map(function(r){return fd(r.date)+' | Tag '+r.tag+' | '+r.sex+' '+r.breed+(r.age?' | Age: '+r.age:'')+'\n  Cause: '+r.cause+' | Symptoms: '+r.symptoms+'\n  Post-mortem: '+r.postMortem;}).join('\n\n')+'\n\n'+sep+'\nGenerated: '+new Date().toLocaleString();
   } else if(type==='sales'){
     var sold=DB.animals.filter(function(a){return a.status==='sold';});
     var totalRev=sold.reduce(function(s,a){return s+(a.salePrice||0);},0);
@@ -2339,6 +2738,10 @@ function init(){
     DB=stored.db; SET=stored.set||{name:'My Feedlot Farm',location:'Nairobi, Kenya',owner:'Farm Manager',phone:'',reg:'',interval:14,target:35};
     moveLog=stored.moves||[];
     if(!DB.feedProgram){var d2=defaults();DB.feedProgram=d2.feedProgram;}
+    if(!DB.clinical){var d3=defaults();DB.clinical=d3.clinical;}
+    if(!DB.deworming){var d4=defaults();DB.deworming=d4.deworming;}
+    if(!DB.vaccination){var d5=defaults();DB.vaccination=d5.vaccination;}
+    if(!DB.mortality){var d6=defaults();DB.mortality=d6.mortality;}
   } else {
     var d=defaults();DB=d;
     SET={name:'My Feedlot Farm',location:'Nairobi, Kenya',owner:'Farm Manager',phone:'',reg:'',interval:14,target:35};
@@ -2366,10 +2769,10 @@ function init(){
 // AUTH STATE
 var CURRENT_USER = null; // {id, email, role, name, assigned_lots}
 var ROLE_PERMS = {
-  admin:    {dash:1,animals:1,lots:1,health:1,feed:1,inv:1,rep:1,more:1,users:1},
-  manager:  {dash:1,animals:1,lots:1,health:1,feed:1,inv:1,rep:1,more:1,users:0},
-  attendant:{dash:1,animals:1,lots:1,health:1,feed:1,inv:0,rep:0,more:0,users:0},
-  vet:      {dash:1,animals:1,lots:0,health:1,feed:0,inv:0,rep:0,more:0,users:0}
+  admin:    {dash:1,animals:1,lots:1,health:1,feed:1,inv:1,mortality:1,rep:1,more:1,users:1},
+  manager:  {dash:1,animals:1,lots:1,health:1,feed:1,inv:1,mortality:1,rep:1,more:1,users:0},
+  attendant:{dash:1,animals:1,lots:1,health:1,feed:1,inv:0,mortality:1,rep:0,more:0,users:0},
+  vet:      {dash:1,animals:1,lots:0,health:1,feed:0,inv:0,mortality:1,rep:0,more:0,users:0}
 };
 
 // ============================================================
@@ -2478,7 +2881,16 @@ function applyRoleUI(){
   // Update topbar
   var sub = document.getElementById('tb-sub');
   var roleLabel = role.charAt(0).toUpperCase()+role.slice(1);
-  if(sub) sub.textContent = (CURRENT_USER.name||CURRENT_USER.email) + ' · ' + roleLabel;
+  if(sub) sub.textContent = SET.name||'Farm Management System';
+  var tbUser = document.getElementById('tb-user-name');
+  if(tbUser) tbUser.textContent = CURRENT_USER.name||CURRENT_USER.email||'Account';
+  // Update sidebar user info
+  var sbName=document.getElementById('sb-name');
+  var sbRole=document.getElementById('sb-role');
+  var sbAv=document.getElementById('sb-avatar');
+  if(sbName) sbName.textContent=CURRENT_USER.name||CURRENT_USER.email||'–';
+  if(sbRole) sbRole.textContent=roleLabel;
+  if(sbAv) sbAv.textContent=(CURRENT_USER.name||CURRENT_USER.email||'?').substring(0,2).toUpperCase();
   // Show/hide admin-only UI elements
   document.querySelectorAll('.admin-only').forEach(function(el){
     el.style.display = (role==='admin') ? '' : 'none';
@@ -3036,18 +3448,29 @@ function SP(btn,id){
   var role = CURRENT_USER?CURRENT_USER.role:'manager';
   var perms = ROLE_PERMS[role]||ROLE_PERMS.manager;
   if(!perms[id]){toast('Access restricted — contact your manager');return;}
-  document.querySelectorAll('.ni').forEach(function(b){b.classList.remove('on');});
+  // Update all .ni buttons (sidebar + mobile nav)
+  document.querySelectorAll('.ni[data-p]').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-p')===id);
+  });
   document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('on');});
-  btn.classList.add('on');
   document.getElementById('pane-'+id).classList.add('on');
+  // Close mobile sidebar after navigation
+  var sb=document.getElementById('sidebar');
+  if(sb&&window.innerWidth<=768) sb.classList.remove('open');
   if(id==='dash')RD();
   else if(id==='animals')RA();
   else if(id==='lots')RL();
-  else if(id==='health')RH();
+  else if(id==='health'){RH();RClinical();RDeworming();RVaccination();}
   else if(id==='feed')RF();
   else if(id==='inv')RI();
+  else if(id==='mortality')RMort();
   else if(id==='rep'){}
   else if(id==='more'){RS();loadSettings();loadEmailSettings();updateAccountCard();}
+}
+
+function toggleSidebar(){
+  var sb=document.getElementById('sidebar');
+  if(sb) sb.classList.toggle('open');
 }
 
 // ============================================================
