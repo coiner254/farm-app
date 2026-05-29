@@ -462,19 +462,28 @@ tr:hover td{background:#fafcf9;}
 
   <!-- CLINICAL -->
   <div id="hsub-clinical" class="subpane on">
-    <div class="fb" style="margin-bottom:12px;"><div class="sec" style="margin:0;">Clinical &amp; treatment log</div><button class="btn bp bsm" onclick="OM(\'m-add-clinical\')">+ Treatment</button></div>
+    <div class="fb" style="margin-bottom:12px;">
+      <div class="sec" style="margin:0;">Clinical &amp; treatment log</div>
+      <button class="btn bp bsm" onclick="OM('m-add-clinical')">+ Treatment</button>
+    </div>
     <div id="clinical-list"></div>
   </div>
 
   <!-- DEWORMING -->
   <div id="hsub-deworming" class="subpane">
-    <div class="fb" style="margin-bottom:12px;"><div class="sec" style="margin:0;">Deworming log</div><button class="btn bp bsm" onclick="OM(\'m-add-deworming\')">+ Deworming</button></div>
+    <div class="fb" style="margin-bottom:12px;">
+      <div class="sec" style="margin:0;">Deworming log</div>
+      <button class="btn bp bsm" onclick="OM('m-add-deworming')">+ Deworming</button>
+    </div>
     <div id="deworming-list"></div>
   </div>
 
   <!-- VACCINATION -->
   <div id="hsub-vaccination" class="subpane">
-    <div class="fb" style="margin-bottom:12px;"><div class="sec" style="margin:0;">Vaccination log</div><button class="btn bp bsm" onclick="OM(\'m-add-vaccination\')">+ Vaccination</button></div>
+    <div class="fb" style="margin-bottom:12px;">
+      <div class="sec" style="margin:0;">Vaccination log</div>
+      <button class="btn bp bsm" onclick="OM('m-add-vaccination')">+ Vaccination</button>
+    </div>
     <div id="vaccination-list"></div>
   </div>
 
@@ -485,24 +494,44 @@ tr:hover td{background:#fafcf9;}
       <div class="mc warn"><div class="v" id="h-due">0</div><div class="l">due 7 days</div></div>
       <div class="mc ok"><div class="v" id="h-done">0</div><div class="l">completed</div></div>
     </div>
-    <div class="fb" style="margin-bottom:8px;"><div class="sec" style="margin:0;">Scheduled events</div><button class="btn bp bsm" onclick="OM(\'m-add-h\')">+ Event</button></div>
+    <div class="fb" style="margin-bottom:8px;">
+      <div class="sec" style="margin:0;">Scheduled events</div>
+      <button class="btn bp bsm" onclick="OM('m-add-h')">+ Event</button>
+    </div>
     <div class="sr">
-      <select id="hf-type" onchange="RH()" style="flex:1;"><option value="">All types</option><option>Deworming</option><option>Vaccination</option><option>Dipping / spraying</option><option>Veterinary check</option><option>Treatment</option><option>Vitamin supplement</option></select>
-      <select id="hf-st" onchange="RH()" style="width:130px;"><option value="">All</option><option value="overdue">Overdue</option><option value="due">Due soon</option><option value="upcoming">Upcoming</option><option value="done">Done</option></select>
+      <select id="hf-type" onchange="RH()" style="flex:1;">
+        <option value="">All types</option>
+        <option>Deworming</option>
+        <option>Vaccination</option>
+        <option>Dipping / spraying</option>
+        <option>Veterinary check</option>
+        <option>Treatment</option>
+        <option>Vitamin supplement</option>
+      </select>
+      <select id="hf-st" onchange="RH()" style="width:130px;">
+        <option value="">All</option>
+        <option value="overdue">Overdue</option>
+        <option value="due">Due soon</option>
+        <option value="upcoming">Upcoming</option>
+        <option value="done">Done</option>
+      </select>
     </div>
     <div id="h-list"></div>
     <div class="sec" style="margin-top:18px;">Standard protocols</div>
-    <div class="proto"><div class="proto-t">Deworming rotation</div><div class="proto-b">Rotate every 4–6 weeks: Albendazole 10% → Levamisole HCl → Ivermectin. Dose strictly by body weight immediately after weighing. Observe withdrawal period (21 days) before slaughter.</div></div>
-    <div class="proto"><div class="proto-t">Vaccination schedule</div><div class="proto-b">Entry: Clostridial (pulpy kidney) + CCPP + Blantrax. Booster at 4 weeks. Annual boosters thereafter. Maintain cold chain 2–8°C. Record batch no. on every event.</div></div>
-    <div class="proto"><div class="proto-t">Ectoparasite control</div><div class="proto-b">Amitraz (Triatix) every 6–8 weeks. Weekly tick and lice checks during morning health rounds.</div></div>
+    <div class="proto"><div class="proto-t">Deworming rotation</div><div class="proto-b">Rotate every 4&#x2013;6 weeks: Albendazole 10% &#x2192; Levamisole HCl &#x2192; Ivermectin. Dose strictly by body weight. Observe 21-day withdrawal period before slaughter.</div></div>
+    <div class="proto"><div class="proto-t">Vaccination schedule</div><div class="proto-b">Entry: Clostridial + CCPP + Blantrax. Booster 4 weeks after primary. Annual boosters thereafter. Maintain cold chain 2&#x2013;8&#xB0;C. Record batch number on every event.</div></div>
+    <div class="proto"><div class="proto-t">Ectoparasite control</div><div class="proto-b">Amitraz (Triatix) every 6&#x2013;8 weeks. Weekly tick and lice checks during morning health rounds. Treat Lot 15 animals before reintroduction to production lots.</div></div>
   </div>
 </div>
 
 <!-- MORTALITY -->
 <div id="pane-mortality" class="pane">
   <div class="page-header">
-    <div><div class="page-title">Mortality Records</div><div class="page-sub">Death register with cause, symptoms &amp; post-mortem tracking</div></div>
-    <button class="btn bp" onclick="OM(\'m-add-mortality\')">+ Record death</button>
+    <div>
+      <div class="page-title">Mortality Records</div>
+      <div class="page-sub">Death register with cause, symptoms &amp; post-mortem tracking</div>
+    </div>
+    <button class="btn bp" onclick="OM('m-add-mortality')">+ Record death</button>
   </div>
   <div class="mrow c4">
     <div class="mc bad"><div class="v" id="mort-total">0</div><div class="l">total deaths</div></div>
@@ -510,14 +539,11 @@ tr:hover td{background:#fafcf9;}
     <div class="mc info"><div class="v" id="mort-pm">0</div><div class="l">post-mortems done</div></div>
     <div class="mc"><div class="v" id="mort-rate">0%</div><div class="l">mortality rate</div></div>
   </div>
-  <div class="sec">Top causes of death</div>
-  <div class="cw" style="height:180px;"><canvas id="mort-chart" role="img" aria-label="Causes of death chart">Causes of death</canvas></div>
+  <div class="sec">Causes of death — breakdown</div>
+  <div class="cw" style="height:200px;"><canvas id="mort-chart" role="img" aria-label="Causes of death chart">Causes of death chart</canvas></div>
   <div class="sec">Death register</div>
   <div id="mortality-list"></div>
 </div>
-
-<!-- INVENTORY -->
-<!-- FEEDING PROGRAM -->
 <div id="pane-feed" class="pane">
   <div class="page-title">Feeding program</div>
   <div class="page-sub">Set ration per lot — saved as today's program and used in daily reports</div>
@@ -1359,7 +1385,7 @@ function SP(btn,id){
   if(id==='dash')RD();
   else if(id==='animals')RA();
   else if(id==='lots')RL();
-  else if(id==='health')RH();
+  else if(id==='health'){RH();RClinical();RDeworming();RVaccination();}
   else if(id==='feed')RF();
   else if(id==='inv')RI();
   else if(id==='rep'){}
@@ -2150,13 +2176,49 @@ function switchHealthTab(btn, sub){
 // ── CLINICAL ────────────────────────────────────────────────
 function RClinical(){
   var el=document.getElementById('clinical-list');
-  if(!el)return;
-  var list=(DB.clinical||[]).slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
-  if(!list.length){el.innerHTML='<div class="empty">No clinical records yet</div>';return;}
-  el.innerHTML='<div class="tw"><table><thead><tr><th>Date</th><th>Animal ID</th><th>Diagnosis</th><th>Treatment given</th><th>By</th><th>Remarks</th><th></th></tr></thead><tbody>'+
-    list.map(function(r){
-      return '<tr><td>'+fd(r.date)+'</td><td class="bold">'+(r.animalId||'–')+'</td><td>'+(r.diagnosis||'–')+'</td><td>'+(r.treatment||'–')+'</td><td>'+(r.by||'–')+'</td><td class="muted">'+(r.remarks||'–')+'</td><td><button class="btn bsm bd" onclick="delClinical(\''+r.id+'\')">Delete</button></td></tr>';
-    }).join('')+'</tbody></table></div>';
+  if(!el) return;
+  var allRecords = (DB.clinical||[]);
+  var allDiag = {};
+  allRecords.forEach(function(r){ var d=r.diagnosis||'Unknown'; allDiag[d]=(allDiag[d]||0)+1; });
+  var now = new Date();
+  var thisMonth = allRecords.filter(function(r){ var d=new Date(r.date); return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear(); }).length;
+  var uniqueAnimals = new Set(allRecords.map(function(r){return r.animalId;}).filter(Boolean)).size;
+  var topDiag = Object.keys(allDiag).sort(function(a,b){return allDiag[b]-allDiag[a];})[0]||'None';
+  // Stats
+  var html = '<div class="mrow c4" style="margin-bottom:14px;">';
+  html += '<div class="mc"><div class="v">'+allRecords.length+'</div><div class="l">total treatments</div></div>';
+  html += '<div class="mc warn"><div class="v">'+thisMonth+'</div><div class="l">this month</div></div>';
+  html += '<div class="mc info"><div class="v">'+uniqueAnimals+'</div><div class="l">animals treated</div></div>';
+  html += '<div class="mc bad"><div class="v" style="font-size:14px;">'+topDiag+'</div><div class="l">top diagnosis</div></div>';
+  html += '</div>';
+  // Search bar
+  var searchVal = document.getElementById('cl-search') ? document.getElementById('cl-search').value||'' : '';
+  var diagVal = document.getElementById('cl-diag-filter') ? document.getElementById('cl-diag-filter').value||'' : '';
+  html += '<div class="sr" style="margin-bottom:10px;">';
+  html += '<input id="cl-search" placeholder="Search tag or diagnosis…" oninput="RClinical()" style="flex:1;" value="'+searchVal+'">';
+  html += '<select id="cl-diag-filter" onchange="RClinical()" style="width:160px;"><option value="">All diagnoses</option>';
+  Object.keys(allDiag).sort().forEach(function(d){ html += '<option value="'+d+'"'+(diagVal===d?' selected':'')+'>'+d+'</option>'; });
+  html += '</select></div>';
+  // Filter
+  var list = allRecords.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  if(searchVal) list = list.filter(function(r){ return (r.animalId||'').toLowerCase().includes(searchVal.toLowerCase())||(r.diagnosis||'').toLowerCase().includes(searchVal.toLowerCase()); });
+  if(diagVal) list = list.filter(function(r){ return r.diagnosis===diagVal; });
+  if(!list.length){ el.innerHTML = html+'<div class="empty">No records match filter</div>'; return; }
+  html += '<div class="tw"><table><thead><tr><th>Date</th><th>Animal ID</th><th>Diagnosis</th><th>Treatment given</th><th>By</th><th>Remarks</th><th></th></tr></thead><tbody>';
+  list.forEach(function(r){
+    var diagClass = (r.diagnosis||'').toLowerCase().includes('diarrh')?'warn':(r.diagnosis||'').toLowerCase().includes('salmo')?'bad':(r.diagnosis||'').toLowerCase().includes('orf')?'info':'gray';
+    html += '<tr>';
+    html += '<td>'+fd(r.date)+'</td>';
+    html += '<td><strong>'+(r.animalId||'–')+'</strong></td>';
+    html += '<td><span class="bdg '+diagClass+'">'+(r.diagnosis||'–')+'</span></td>';
+    html += '<td style="font-size:12px;">'+(r.treatment||'–')+'</td>';
+    html += '<td class="muted">'+(r.by||'–')+'</td>';
+    html += '<td class="muted" style="font-size:11px;">'+(r.remarks||'–')+'</td>';
+    html += '<td><button class="btn bsm bd" onclick="delClinical(\"'+r.id+'\")">Delete</button></td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
 }
 function saveClinical(){
   var date=document.getElementById('cl-date').value;
