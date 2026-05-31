@@ -227,6 +227,30 @@ tr:hover td{background:#fafcf9;}
   .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;}
 }
 
+/* ── DARK MODE ───────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg:#111814;--surf:#1a2118;--bdr:#2a3828;
+  --txt:#e8f0e4;--muted:#7a9470;--light:#5a7455;
+  --pri:#4aaa3a;--prib:#162414;
+  --gray50:#1a2118;--gray100:#1f2a1d;--gray200:#2a3828;
+  --gray400:#4a6048;--gray500:#5a7055;--gray600:#8aaa85;--gray700:#b0c8aa;
+  --gray800:#d0e0ca;--gray900:#e8f0e4;
+}
+[data-theme="dark"] .mc{background:#1f2a1d;}
+[data-theme="dark"] .card{background:#1a2118;}
+[data-theme="dark"] .cf{background:#1f2a1d;}
+[data-theme="dark"] .tw{background:#1a2118;}
+[data-theme="dark"] table th{background:#1f2a1d;}
+[data-theme="dark"] table tr:hover td{background:#1f2a1d;}
+[data-theme="dark"] .sidebar{background:#131a11;border-right-color:#2a3828;}
+[data-theme="dark"] .bottom-nav{background:#131a11;border-top-color:#2a3828;}
+[data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea{background:#1f2a1d;border-color:#2a3828;color:#e8f0e4;}
+[data-theme="dark"] .mdl{background:#1a2118;}
+[data-theme="dark"] .proto{background:#1f2a1d;}
+[data-theme="dark"] .cf{background:#1f2a1d;}
+[data-theme="dark"] .ai-box{background:#162414;border-color:#2a4828;}
+[data-theme="dark"] .rout{background:#1f2a1d;}
+
 /* ── MOBILE RESPONSIVE (<768px) ─────────────────────────── */
 @media(max-width:768px){
   :root{--sidebar-w:0px;--topbar-h:56px;}
@@ -328,6 +352,7 @@ tr:hover td{background:#fafcf9;}
   </div>
   <div class="topbar-right">
     <div class="topbar-date" id="tb-date"></div>
+    <button id="dark-mode-btn" onclick="toggleDarkMode()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 10px;font-size:14px;color:#fff;cursor:pointer;">☾</button>
     <div class="topbar-user-pill" onclick="SP(document.querySelector('.ni[data-p=more]'),'more')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
       <span id="tb-user-name">Account</span>
@@ -371,6 +396,10 @@ tr:hover td{background:#fafcf9;}
     <span>Mortality</span>
   </button>
   <div class="sidebar-section">Reports &amp; Admin</div>
+  <button class="ni" data-p="analytics" onclick="SP(this,'analytics')">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>Analytics</span>
+  </button>
   <button class="ni" data-p="rep" onclick="SP(this,'rep')">
     <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
     <span>Reports</span>
@@ -420,11 +449,11 @@ tr:hover td{background:#fafcf9;}
     <button class="btn bp bsm" onclick="resetAddAnimalForm();OM('m-add-a')">+ Animal</button>
   </div>
   <div class="sr">
-    <input id="a-search" placeholder="Search tag, lot…" oninput="RA()">
-    <select id="a-lot-f" onchange="RA()" style="width:110px;">
+    <input id="a-search" placeholder="Search tag, lot…" oninput="RAresetPage()">
+    <select id="a-lot-f" onchange="RAresetPage()" style="width:110px;">
       <option value="">All lots</option>
     </select>
-    <select id="a-status-f" onchange="RA()" style="width:100px;">
+    <select id="a-status-f" onchange="RAresetPage()" style="width:100px;">
       <option value="">All status</option>
       <option value="active">Active</option>
       <option value="watch">Obs.</option>
@@ -545,6 +574,67 @@ tr:hover td{background:#fafcf9;}
   <div class="sec">Death register</div>
   <div id="mortality-list"></div>
 </div>
+
+<!-- ANALYTICS -->
+<div id="pane-analytics" class="pane">
+  <div class="page-header">
+    <div><div class="page-title">Analytics &amp; Performance</div><div class="page-sub">FCR, cost analysis, growth trends &amp; projections</div></div>
+    <select id="an-period" onchange="RAnalytics()" style="width:140px;font-size:13px;">
+      <option value="30">Last 30 days</option>
+      <option value="60">Last 60 days</option>
+      <option value="90">Last 90 days</option>
+      <option value="0">All time</option>
+    </select>
+  </div>
+  <div class="mrow c4">
+    <div class="mc ok"><div class="v" id="an-adg">–</div><div class="l">avg daily gain (g)</div></div>
+    <div class="mc info"><div class="v" id="an-fcr">–</div><div class="l">feed conversion ratio</div></div>
+    <div class="mc warn"><div class="v" id="an-costkg">–</div><div class="l">cost / kg gain (KES)</div></div>
+    <div class="mc purple"><div class="v" id="an-daysale">–</div><div class="l">avg days to sale</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    <div class="card" style="padding:16px;">
+      <div class="sec" style="margin-top:0;">ADG trend (g/day per lot)</div>
+      <div class="cw" style="height:200px;"><canvas id="an-adg-chart" role="img" aria-label="ADG trend">ADG trend</canvas></div>
+    </div>
+    <div class="card" style="padding:16px;">
+      <div class="sec" style="margin-top:0;">Weight distribution</div>
+      <div class="cw" style="height:200px;"><canvas id="an-wt-chart" role="img" aria-label="Weight distribution">Weight distribution</canvas></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    <div class="card" style="padding:16px;">
+      <div class="sec" style="margin-top:0;">Revenue &amp; sales</div>
+      <div class="mrow" style="margin-bottom:8px;">
+        <div class="mc ok"><div class="v" id="an-revenue">–</div><div class="l">total revenue (KES)</div></div>
+        <div class="mc"><div class="v" id="an-sold">–</div><div class="l">animals sold</div></div>
+      </div>
+      <div class="cw" style="height:150px;"><canvas id="an-rev-chart" role="img" aria-label="Revenue chart">Revenue</canvas></div>
+    </div>
+    <div class="card" style="padding:16px;">
+      <div class="sec" style="margin-top:0;">Mortality analysis</div>
+      <div class="mrow" style="margin-bottom:8px;">
+        <div class="mc bad"><div class="v" id="an-mort-rate">–%</div><div class="l">mortality rate</div></div>
+        <div class="mc warn"><div class="v" id="an-mort-cause">–</div><div class="l">top cause</div></div>
+      </div>
+      <div class="cw" style="height:150px;"><canvas id="an-mort-chart2" role="img" aria-label="Mortality causes">Mortality</canvas></div>
+    </div>
+  </div>
+  <div class="card" style="padding:16px;margin-bottom:16px;">
+    <div class="sec" style="margin-top:0;">Feed cost analysis</div>
+    <div class="mrow c3" style="margin-bottom:12px;">
+      <div class="mc"><div class="v" id="an-feed-cost">–</div><div class="l">feed cost/day (KES)</div></div>
+      <div class="mc info"><div class="v" id="an-feed-animal">–</div><div class="l">cost/animal/day (KES)</div></div>
+      <div class="mc ok"><div class="v" id="an-break-even">–</div><div class="l">break-even price/kg</div></div>
+    </div>
+    <div id="an-feed-breakdown"></div>
+  </div>
+  <div class="card" style="padding:16px;">
+    <div class="sec" style="margin-top:0;">Growth projections — closest to target</div>
+    <div id="an-projections"></div>
+  </div>
+</div>
+
 <div id="pane-feed" class="pane">
   <div class="page-title">Feeding program</div>
   <div class="page-sub">Set ration per lot — saved as today's program and used in daily reports</div>
@@ -763,6 +853,9 @@ tr:hover td{background:#fafcf9;}
   </button>
   <button class="ni" data-p="mortality" onclick="SP(this,'mortality')">
     <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 2 7h10c0-2 2-4 2-7a7 7 0 0 0-7-7z"/><line x1="9" y1="22" x2="15" y2="22"/><line x1="10" y1="19" x2="14" y2="19"/></svg><span>Mortality</span>
+  </button>
+  <button class="ni" data-p="analytics" onclick="SP(this,'analytics')">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Analytics</span>
   </button>
   <button class="ni" data-p="inv" onclick="SP(this,'inv')">
     <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg><span>Inventory</span>
@@ -1521,67 +1614,6 @@ function populateLotFilter(){
   if(val&&sel) sel.value=val;
 }
 
-function RA(){
-  populateLotFilter();
-  var search=(document.getElementById('a-search').value||'').toLowerCase();
-  var lotF=document.getElementById('a-lot-f').value;
-  var stF=document.getElementById('a-status-f').value;
-  var list=DB.animals.filter(function(a){
-    return (a.tag.toLowerCase().includes(search)||('lot '+a.lot).includes(search)||
-            (a.breed||'').toLowerCase().includes(search))&&
-      (!lotF||a.lot==lotF)&&(!stF||a.status===stF);
-  });
-  var T=getTarget();
-  var act=list.filter(function(a){return a.status!=='sold';});
-  document.getElementById('animal-count').textContent=list.length+' animals shown · '+act.filter(function(a){return cw(a)>=T;}).length+' ready for sale · '+DB.animals.filter(function(a){return a.status==='sold';}).length+' sold';
-  var el=document.getElementById('a-list');
-  if(!list.length){el.innerHTML='<div class="empty">No animals found</div>';return;}
-  el.innerHTML=list.map(function(a){
-    var w=cw(a),g=adg(a),d=dtm(a),dw=daysUntilWeigh(a);
-    var pct=Math.min(100,Math.round(w/T*100));
-    var col=w>=T?'#1f5219':w>=25?'#2d7024':w>=20?'#d4920a':'#dc2626';
-    var sb=a.status==='active'?'ok':a.status==='watch'?'warn':a.status==='sold'?'gray':'gray';
-    var dlabel=d===0?'<span class="bdg ok">Ready</span>':d!==null?d+'d':'–';
-    var nwchip='';
-    if(a.status==='active'&&a.weights&&a.weights.length){
-      var nwcls=dw===null?'':dw<=0?'due':'ok';
-      nwchip='<span class="nw-chip '+nwcls+'">'+
-        (dw===null?'No schedule':dw<=0?'Weigh now!':'Weigh in '+dw+'d')+'</span>';
-    }
-    var ageDays=a.dob?Math.floor((new Date()-new Date(a.dob+'T00:00:00'))/86400000):null;
-    var ageStr=ageDays!==null?(ageDays>=365?Math.floor(ageDays/365)+'y '+(Math.floor((ageDays%365)/30))+'m':Math.floor(ageDays/30)+'m'):'–';
-    var isSold=a.status==='sold';
-    return '<div class="card" style="padding:11px;margin-bottom:8px;'+(isSold?'opacity:.7;':'')+'">' +
-      '<div class="fb" style="margin-bottom:6px;">' +
-        '<div><div style="font-size:14px;font-weight:600;">'+a.tag+'</div>' +
-        '<div class="muted" style="font-size:11px;">Lot '+a.lot+' · '+a.breed+' / '+a.sex+(a.colour?' · '+a.colour:'')+' · Age: '+ageStr+'</div></div>' +
-        '<div style="text-align:right;">' +
-          '<span class="bdg '+sb+'">'+a.status+'</span>' +
-          (nwchip?'<br><span style="font-size:10px;">'+nwchip+'</span>':'') +
-        '</div>' +
-      '</div>' +
-      (!isSold?
-        '<div class="fb" style="margin-bottom:5px;">' +
-          '<span style="font-size:19px;font-weight:600;font-family:var(--mono);">'+w.toFixed(1)+' kg</span>' +
-          '<span class="muted" style="font-size:11px;">'+(g!==null?Math.round(g*1000)+' g/day ADG':'–')+' &nbsp;To target: '+dlabel+'</span>' +
-        '</div>' +
-        '<div class="pb" style="margin-bottom:4px;"><div class="pf" style="width:'+pct+'%;background:'+col+';"></div></div>' +
-        '<div class="fb"><span class="muted" style="font-size:10px;">'+pct+'% to '+T+' kg</span><span class="muted" style="font-size:10px;">Next: '+fd(nextWeigh(a))+'</span></div>'
-        :
-        '<div class="muted" style="font-size:12px;">Sold: '+fd(a.saleDate)+' · KES '+(a.salePrice||(0)).toLocaleString('en-KE')+(a.buyer?' · '+a.buyer:'')+'</div>'
-      )+
-      '<div class="brow" style="margin-top:8px;">' +
-        '<button class="btn bs bsm" onclick="viewAnimal(\''+a.tag+'\')">View</button>' +
-        '<button class="btn bs bsm" onclick="editAnimal(\''+a.tag+'\')">Edit</button>' +
-        (!isSold?'<button class="btn bp bsm" onclick="openWt(\''+a.tag+'\')">+ Weight</button>':'') +
-        (!isSold&&a.status==='active'&&w>=T?'<button class="btn bg- bsm" onclick="openSell(\''+a.tag+'\')">Sell</button>':'') +
-        (!isSold&&a.status==='active'&&w<T?'<button class="btn bg- bsm" onclick="openSell(\''+a.tag+'\')">Sell</button>':'') +
-        (!isSold&&a.status!=='watch'?'<button class="btn bsm" style="background:var(--r50);color:var(--r500);border:1px solid var(--r200);" onclick="moveLot15(\''+a.tag+'\')">→ L15</button>':'') +
-        '<button class="btn bsm bd" onclick="deleteAnimal(\''+a.tag+'\')">Delete</button>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-}
 
 function openWt(tag){
   curTag=tag;
@@ -2810,6 +2842,7 @@ function init(){
   var t=today();
   ['a-edate','wf-date','sf-start','he-date','r-date'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=t;});
   document.querySelectorAll('.mo').forEach(function(overlay){overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.classList.remove('on');});});
+  initDarkMode();
   updInfo(); RD(); updateConnStatus();
   // Then load from cloud (updates UI when done)
   if(CONFIGURED){
@@ -2823,16 +2856,307 @@ function init(){
 
 
 // ============================================================
+// ============================================================
+// ANALYTICS ENGINE
+// ============================================================
+var analyticsCharts = {};
+
+function RAnalytics(){
+  var period = parseInt(document.getElementById('an-period').value)||30;
+  var now = new Date();
+  var cutoff = period > 0 ? new Date(now - period*86400000) : new Date(0);
+  var act = DB.animals.filter(function(a){return a.status!=='sold';});
+  var T = getTarget();
+
+  // ── ADG ──────────────────────────────────────────────────
+  var adgs = act.map(adg).filter(function(g){return g!==null&&g>0;});
+  var avgADG = adgs.length ? Math.round(adgs.reduce(function(s,g){return s+g;},0)/adgs.length*1000) : 0;
+  document.getElementById('an-adg').textContent = avgADG > 0 ? avgADG+'g' : '–';
+
+  // ── FCR (Feed Conversion Ratio = feed consumed / weight gained) ──
+  var totFeedKg = calcLotFeedTotals().concentrate + calcLotFeedTotals().silage + calcLotFeedTotals().hay;
+  var totGainKg = act.reduce(function(s,a){
+    if(a.weights.length<2) return s;
+    return s + (cw(a) - a.weights[0].wt);
+  }, 0);
+  var fcr = totGainKg > 0 ? (totFeedKg / totGainKg).toFixed(2) : '–';
+  document.getElementById('an-fcr').textContent = fcr;
+
+  // ── Feed cost per day ──────────────────────────────────────
+  var concItem = DB.inventory.find(function(i){return i.cat.includes('concentrate');});
+  var silageItem = DB.inventory.find(function(i){return i.cat.includes('silage');});
+  var hayItem = DB.inventory.find(function(i){return i.cat.includes('hay');});
+  var totals = calcLotFeedTotals();
+  var dailyCost = (totals.concentrate*(concItem?concItem.cost:0)) +
+                  (totals.silage*(silageItem?silageItem.cost:0)) +
+                  (totals.hay*(hayItem?hayItem.cost:0));
+  var costPerAnimal = act.length > 0 ? dailyCost/act.length : 0;
+  document.getElementById('an-feed-cost').textContent = Math.round(dailyCost).toLocaleString('en-KE');
+  document.getElementById('an-feed-animal').textContent = costPerAnimal.toFixed(1);
+
+  // ── Cost per kg gain ──────────────────────────────────────
+  var daysOnFeed = 90; // assume 90 day average
+  var totalCostOnFeed = dailyCost * daysOnFeed;
+  var avgGain = act.reduce(function(s,a){var g=adg(a);return s+(g?g:0);},0)/Math.max(act.length,1)*daysOnFeed;
+  var costPerKg = avgGain > 0 ? (totalCostOnFeed/act.length/avgGain).toFixed(0) : '–';
+  document.getElementById('an-costkg').textContent = costPerKg !== '–' ? 'KES '+costPerKg : '–';
+
+  // ── Break-even price per kg ──────────────────────────────
+  var purchaseCostPerAnimal = act.reduce(function(s,a){return s+(a.purchasePrice||0);},0)/Math.max(act.length,1);
+  var totalCostPerAnimal = purchaseCostPerAnimal + (dailyCost/Math.max(act.length,1)*daysOnFeed);
+  var breakEven = avgGain > 0 && totalCostPerAnimal > 0 ? Math.round(totalCostPerAnimal/avgGain) : '–';
+  document.getElementById('an-break-even').textContent = breakEven !== '–' ? 'KES '+breakEven : '–';
+
+  // ── Sales & revenue ──────────────────────────────────────
+  var sold = DB.animals.filter(function(a){return a.status==='sold';});
+  var totalRev = sold.reduce(function(s,a){return s+(a.salePrice||0);},0);
+  document.getElementById('an-revenue').textContent = totalRev > 0 ? (totalRev/1000).toFixed(0)+'K' : '0';
+  document.getElementById('an-sold').textContent = sold.length;
+
+  // ── Avg days sold animals spent on farm ──────────────────
+  var soldWithDates = sold.filter(function(a){return a.entry&&a.saleDate;});
+  var avgDays = soldWithDates.length ? Math.round(soldWithDates.reduce(function(s,a){
+    return s+(new Date(a.saleDate)-new Date(a.entry))/86400000;
+  },0)/soldWithDates.length) : 0;
+  document.getElementById('an-daysale').textContent = avgDays > 0 ? avgDays+'d' : '–';
+
+  // ── Mortality ──────────────────────────────────────────────
+  var mortList = DB.mortality||[];
+  var totalAnimalsEver = act.length + mortList.length;
+  var mortRate = totalAnimalsEver > 0 ? (mortList.length/totalAnimalsEver*100).toFixed(1) : '0';
+  document.getElementById('an-mort-rate').textContent = mortRate+'%';
+  var causes={};mortList.forEach(function(r){var cz=r.cause||'Unknown';causes[cz]=(causes[cz]||0)+1;});
+  var topCause=Object.keys(causes).sort(function(a,b){return causes[b]-causes[a];})[0]||'–';
+  document.getElementById('an-mort-cause').textContent = topCause.length>12?topCause.substring(0,12)+'…':topCause;
+
+  // ── Feed breakdown table ──────────────────────────────────
+  var feedBreakEl = document.getElementById('an-feed-breakdown');
+  if(feedBreakEl){
+    var feedItems = DB.inventory.filter(function(i){return i.cat.startsWith('Feed');});
+    feedBreakEl.innerHTML = feedItems.length ? '<div class="tw"><table><thead><tr><th>Feed type</th><th>Daily qty</th><th>Unit cost</th><th>Daily cost</th><th>% of total</th></tr></thead><tbody>'+
+      feedItems.map(function(i){
+        var dailyQty = i.daily||0;
+        var dc = dailyQty*(i.cost||0);
+        var pct = dailyCost>0?(dc/dailyCost*100).toFixed(1):'0';
+        return '<tr><td>'+i.name+'</td><td class="mono">'+dailyQty+' '+i.unit+'</td><td class="mono">KES '+( i.cost||0)+'</td><td class="mono bold">KES '+Math.round(dc).toLocaleString('en-KE')+'</td><td><div class="pb" style="display:inline-block;width:60px;vertical-align:middle;margin-right:6px;"><div class="pf" style="width:'+pct+'%;background:var(--pri);"></div></div>'+pct+'%</td></tr>';
+      }).join('')+'</tbody></table></div>' : '<div class="empty">Add unit costs to inventory items to see feed cost analysis</div>';
+  }
+
+  // ── Growth projections ────────────────────────────────────
+  var projEl = document.getElementById('an-projections');
+  if(projEl){
+    var closest = act.filter(function(a){return cw(a)<T&&adg(a)!==null&&adg(a)>0;})
+      .sort(function(a,b){return (dtm(a)||999)-(dtm(b)||999);}).slice(0,8);
+    projEl.innerHTML = closest.length ? '<div class="tw"><table><thead><tr><th>Tag</th><th>Lot</th><th>Current wt</th><th>ADG</th><th>Days to '+T+' kg</th><th>Est. sale date</th><th>Progress</th></tr></thead><tbody>'+
+      closest.map(function(a){
+        var d=dtm(a);
+        var saleDate = d!==null ? new Date(now.getTime()+d*86400000).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '–';
+        var pct=Math.min(100,Math.round(cw(a)/T*100));
+        var col=pct>=80?'var(--g500)':pct>=60?'var(--b500)':'var(--a500)';
+        return '<tr><td class="bold">'+a.tag+'</td><td>Lot '+a.lot+'</td>'+
+          '<td class="mono">'+cw(a).toFixed(1)+' kg</td>'+
+          '<td class="mono">'+(adg(a)?Math.round(adg(a)*1000):0)+' g/d</td>'+
+          '<td><span class="bdg '+(d<=7?'ok':d<=21?'warn':'info')+'">'+d+'d</span></td>'+
+          '<td style="font-size:11px;">'+saleDate+'</td>'+
+          '<td><div class="pb" style="width:80px;display:inline-block;"><div class="pf" style="width:'+pct+'%;background:'+col+';"></div></div></td></tr>';
+      }).join('')+'</tbody></table></div>' : '<div class="empty">No animals approaching target weight</div>';
+  }
+
+  // ── Charts ────────────────────────────────────────────────
+  renderAnalyticsCharts(act, sold, mortList, totals);
+}
+
+function renderAnalyticsCharts(act, sold, mortList, totals){
+  // Destroy old charts
+  Object.values(analyticsCharts).forEach(function(ch){if(ch)ch.destroy();});
+
+  // ADG chart by lot
+  var lotData = LOT_CONFIG.filter(function(lc){return act.filter(function(a){return a.lot===lc.num;}).length>0;}).slice(0,8);
+  var lotLabels = lotData.map(function(lc){return lc.label;});
+  var lotADGs = lotData.map(function(lc){
+    var animals = act.filter(function(a){return a.lot===lc.num;});
+    var gs = animals.map(adg).filter(function(g){return g!==null&&g>0;});
+    return gs.length ? Math.round(gs.reduce(function(s,g){return s+g;},0)/gs.length*1000) : 0;
+  });
+  var adgCtx = document.getElementById('an-adg-chart');
+  if(adgCtx) analyticsCharts.adg = new Chart(adgCtx.getContext('2d'),{type:'bar',data:{labels:lotLabels,datasets:[{label:'ADG g/day',data:lotADGs,backgroundColor:'#2d7024',borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10}}}}}});
+
+  // Weight distribution doughnut
+  var T = getTarget();
+  var wdCounts = [
+    act.filter(function(a){return cw(a)<20;}).length,
+    act.filter(function(a){return cw(a)>=20&&cw(a)<25;}).length,
+    act.filter(function(a){return cw(a)>=25&&cw(a)<30;}).length,
+    act.filter(function(a){return cw(a)>=30&&cw(a)<T;}).length,
+    act.filter(function(a){return cw(a)>=T;}).length
+  ];
+  var wtCtx = document.getElementById('an-wt-chart');
+  if(wtCtx) analyticsCharts.wt = new Chart(wtCtx.getContext('2d'),{type:'doughnut',data:{labels:['<20kg','20-24kg','25-29kg','30-34kg','≥'+T+'kg'],datasets:[{data:wdCounts,backgroundColor:['#dc2626','#d4920a','#3b82f6','#2d7024','#1f5219'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:10}}}}});
+
+  // Revenue bar by month
+  var revByMonth = {};
+  sold.forEach(function(a){
+    if(!a.saleDate) return;
+    var m = a.saleDate.substring(0,7);
+    revByMonth[m]=(revByMonth[m]||0)+(a.salePrice||0);
+  });
+  var revMonths = Object.keys(revByMonth).sort().slice(-6);
+  var revCtx = document.getElementById('an-rev-chart');
+  if(revCtx) analyticsCharts.rev = new Chart(revCtx.getContext('2d'),{type:'bar',data:{labels:revMonths.map(function(m){return m;}),datasets:[{label:'Revenue KES',data:revMonths.map(function(m){return Math.round(revByMonth[m]/1000);}),backgroundColor:'#2d7024',borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:function(v){return v+'K';}}}}}});
+
+  // Mortality causes
+  var causes={};mortList.forEach(function(r){var cz=r.cause||'Unknown';causes[cz]=(causes[cz]||0)+1;});
+  var mc2Ctx = document.getElementById('an-mort-chart2');
+  if(mc2Ctx&&Object.keys(causes).length) analyticsCharts.mort = new Chart(mc2Ctx.getContext('2d'),{type:'pie',data:{labels:Object.keys(causes),datasets:[{data:Object.values(causes),backgroundColor:['#dc2626','#d4920a','#3b82f6','#7c3aed','#2d7024'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:10}}}}});
+}
+
+// ============================================================
+// DARK MODE
+// ============================================================
+function initDarkMode(){
+  var saved = localStorage.getItem('ffm_dark');
+  var prefersDark = window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var isDark = saved !== null ? saved==='1' : prefersDark;
+  applyDarkMode(isDark);
+}
+
+function applyDarkMode(dark){
+  document.documentElement.setAttribute('data-theme', dark?'dark':'light');
+  localStorage.setItem('ffm_dark', dark?'1':'0');
+  var btn = document.getElementById('dark-mode-btn');
+  if(btn) btn.textContent = dark ? '☀' : '☾';
+}
+
+function toggleDarkMode(){
+  var current = document.documentElement.getAttribute('data-theme')==='dark';
+  applyDarkMode(!current);
+}
+
+// ============================================================
+// PAGINATION
+// ============================================================
+var animalPage = 0;
+var PAGE_SIZE = 25;
+
+function buildAnimalCard(a, T){
+  var w=cw(a), g=adg(a), d=dtm(a), dw=daysUntilWeigh(a);
+  var pct=Math.min(100,Math.round(w/T*100));
+  var col=w>=T?'#1f5219':w>=25?'#2d7024':w>=20?'#d4920a':'#dc2626';
+  var sb=a.status==='active'?'ok':a.status==='watch'?'warn':a.status==='sold'?'gray':'bad';
+  var dlabel=d===0?'<span class="bdg ok">Ready</span>':d!==null?d+'d':'–';
+  var nwchip='';
+  if(a.status==='active'&&a.weights&&a.weights.length){
+    var nwcls=dw===null?'':dw<=0?'due':'ok';
+    nwchip='<span class="nw-chip '+nwcls+'">'+( dw===null?'No schedule':dw<=0?'Weigh now!':'Weigh in '+dw+'d')+'</span>';
+  }
+  var ageDays=a.dob?Math.floor((new Date()-new Date(a.dob+'T00:00:00'))/86400000):null;
+  var ageStr=ageDays!==null?(ageDays>=365?Math.floor(ageDays/365)+'yr '+(Math.floor((ageDays%365)/30))+'mo':Math.floor(ageDays/30)+' months'):'–';
+  var isSold=a.status==='sold';
+  var html = '<div class="card" style="padding:11px;margin-bottom:8px;'+(isSold?'opacity:.7;':'')+'">'+
+    '<div class="fb" style="margin-bottom:6px;">'+
+      '<div><div style="font-size:14px;font-weight:600;">'+a.tag+'</div>'+
+      '<div class="muted" style="font-size:11px;">Lot '+a.lot+' · '+a.breed+' / '+a.sex+(a.colour?' · '+a.colour:'')+' · Age: '+ageStr+'</div></div>'+
+      '<div style="text-align:right;">'+
+        '<span class="bdg '+sb+'">'+a.status+'</span>'+
+        (nwchip?'<br><span style="font-size:10px;">'+nwchip+'</span>':'')+
+      '</div>'+
+    '</div>';
+  if(!isSold){
+    html += '<div class="fb" style="margin-bottom:5px;">'+
+      '<span style="font-size:19px;font-weight:600;font-family:var(--mono);">'+w.toFixed(1)+' kg</span>'+
+      '<span class="muted" style="font-size:11px;">'+(g!==null?Math.round(g*1000)+' g/day ADG':'–')+'  To target: '+dlabel+'</span>'+
+    '</div>'+
+    '<div class="pb" style="margin-bottom:4px;"><div class="pf" style="width:'+pct+'%;background:'+col+';"></div></div>'+
+    '<div class="fb"><span class="muted" style="font-size:10px;">'+pct+'% to '+T+' kg</span>'+
+    '<span class="muted" style="font-size:10px;">Next: '+fd(nextWeigh(a))+'</span></div>';
+  } else {
+    html += '<div class="muted" style="font-size:12px;">Sold: '+fd(a.saleDate)+' · KES '+(a.salePrice||0).toLocaleString('en-KE')+(a.buyer?' · '+a.buyer:'')+'</div>';
+  }
+  html += '<div class="brow" style="margin-top:8px;">'+
+    '<button class="btn bs bsm" data-tag="'+a.tag+'" onclick="viewAnimal(this.dataset.tag)">View</button>'+
+    '<button class="btn bs bsm" data-tag="'+a.tag+'" onclick="editAnimal(this.dataset.tag)">Edit</button>'+
+    (!isSold?'<button class="btn bp bsm" data-tag="'+a.tag+'" onclick="openWt(this.dataset.tag)">+ Weight</button>':'')+
+    (!isSold?'<button class="btn bg- bsm" data-tag="'+a.tag+'" onclick="openSell(this.dataset.tag)">Sell</button>':'')+
+    (!isSold&&a.status!=='watch'?'<button class="btn bsm" style="background:var(--r50);color:var(--r500);border:1px solid var(--r200);" data-tag="'+a.tag+'" onclick="moveLot15(this.dataset.tag)">→ L15</button>':'')+
+    '<button class="btn bsm bd" data-tag="'+a.tag+'" onclick="deleteAnimal(this.dataset.tag)">Delete</button>'+
+  '</div></div>';
+  return html;
+}
+
+function RA(){
+  populateLotFilter();
+  var search=(document.getElementById('a-search').value||'').toLowerCase();
+  var lotF=document.getElementById('a-lot-f').value;
+  var stF=document.getElementById('a-status-f').value;
+  var allList=DB.animals.filter(function(a){
+    return (a.tag.toLowerCase().includes(search)||(a.lot+'').includes(search)||
+            (a.breed||'').toLowerCase().includes(search))&&
+      (!lotF||a.lot==lotF)&&(!stF||a.status===stF);
+  });
+  var T=getTarget();
+  var act=allList.filter(function(a){return a.status!=='sold';});
+  var total=allList.length;
+  var pages=Math.ceil(total/PAGE_SIZE);
+  if(animalPage>=pages) animalPage=Math.max(0,pages-1);
+  var paged=allList.slice(animalPage*PAGE_SIZE,(animalPage+1)*PAGE_SIZE);
+  var countEl=document.getElementById('animal-count');
+  if(countEl) countEl.textContent=total+' animals · '+act.filter(function(a){return cw(a)>=T;}).length+' ready · showing '+(animalPage*PAGE_SIZE+1)+'–'+Math.min((animalPage+1)*PAGE_SIZE,total)+' of '+total;
+  var el=document.getElementById('a-list');
+  if(!paged.length){el.innerHTML='<div class="empty">No animals found</div>';return;}
+  var html=paged.map(function(a){return buildAnimalCard(a,T);}).join('');
+  if(pages>1){
+    html+='<div class="fb" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);">'+
+      '<button class="btn bs bsm" onclick="animalPage=Math.max(0,animalPage-1);RA()" '+(animalPage===0?'disabled':'')+'>← Prev</button>'+
+      '<span class="muted" style="font-size:12px;">Page '+(animalPage+1)+' of '+pages+'</span>'+
+      '<button class="btn bs bsm" onclick="animalPage=Math.min('+(pages-1)+',animalPage+1);RA()" '+(animalPage>=pages-1?'disabled':'')+'>Next →</button>'+
+    '</div>';
+  }
+  el.innerHTML=html;
+}
+
+function RAresetPage(){ animalPage=0; RA(); }
+
+// ============================================================
+// DARK MODE
+// ============================================================
+function initDarkMode(){
+  var saved = localStorage.getItem('ffm_dark');
+  var prefersDark = window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var isDark = saved !== null ? saved==='1' : prefersDark;
+  applyDarkMode(isDark);
+}
+
+function applyDarkMode(dark){
+  document.documentElement.setAttribute('data-theme', dark?'dark':'light');
+  localStorage.setItem('ffm_dark', dark?'1':'0');
+  var btn = document.getElementById('dark-mode-btn');
+  if(btn) btn.textContent = dark ? '☀' : '☾';
+}
+
+function toggleDarkMode(){
+  var current = document.documentElement.getAttribute('data-theme')==='dark';
+  applyDarkMode(!current);
+}
+
+// ============================================================
+// PAGINATION
+// ============================================================
+var animalPage = 0;
+var PAGE_SIZE = 25;
+
+function RAresetPage(){ animalPage=0; RA(); }
+
+// ============================================================
 // PHASE 4 — AUTH, ROLES, OFFLINE SYNC, EXCEL, EMAIL ALERTS
 // ============================================================
 
 // AUTH STATE
 var CURRENT_USER = null; // {id, email, role, name, assigned_lots}
 var ROLE_PERMS = {
-  admin:    {dash:1,animals:1,lots:1,health:1,feed:1,inv:1,mortality:1,rep:1,more:1,users:1},
-  manager:  {dash:1,animals:1,lots:1,health:1,feed:1,inv:1,mortality:1,rep:1,more:1,users:0},
-  attendant:{dash:1,animals:1,lots:1,health:1,feed:1,inv:0,mortality:1,rep:0,more:0,users:0},
-  vet:      {dash:1,animals:1,lots:0,health:1,feed:0,inv:0,mortality:1,rep:0,more:0,users:0}
+  admin:    {dash:1,animals:1,lots:1,health:1,feed:1,inv:1,mortality:1,analytics:1,rep:1,more:1,users:1},
+  manager:  {dash:1,animals:1,lots:1,health:1,feed:1,inv:1,mortality:1,analytics:1,rep:1,more:1,users:0},
+  attendant:{dash:1,animals:1,lots:1,health:1,feed:1,inv:0,mortality:1,analytics:0,rep:0,more:0,users:0},
+  vet:      {dash:1,animals:1,lots:0,health:1,feed:0,inv:0,mortality:1,analytics:0,rep:0,more:0,users:0}
 };
 
 // ============================================================
@@ -3524,6 +3848,7 @@ function SP(btn,id){
   else if(id==='feed')RF();
   else if(id==='inv')RI();
   else if(id==='mortality')RMort();
+  else if(id==='analytics')RAnalytics();
   else if(id==='rep'){}
   else if(id==='more'){RS();loadSettings();loadEmailSettings();updateAccountCard();}
 }
