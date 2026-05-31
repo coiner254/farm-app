@@ -233,9 +233,10 @@ tr:hover td{background:#fafcf9;}
   .sidebar{transform:translateX(-230px);transition:transform .25s;width:230px;}
   .sidebar.open{transform:translateX(0);}
   .content{margin-left:0;padding:14px 14px 80px;}
-  .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--surf);border-top:1px solid var(--bdr);z-index:100;padding-bottom:env(safe-area-inset-bottom);}
-  .ni{flex-direction:column;padding:7px 4px 5px;font-size:9px;}
-  .ni span{font-size:9px;margin-top:2px;}
+  .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--surf);border-top:1px solid var(--bdr);z-index:100;padding-bottom:env(safe-area-inset-bottom);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .bottom-nav::-webkit-scrollbar{display:none;}
+  .ni{flex-direction:column;padding:7px 12px 5px;font-size:9px;flex-shrink:0;min-width:56px;}
+  .ni span{font-size:9px;margin-top:2px;white-space:nowrap;}
   .ni.on::before{display:none;}
   .topbar{padding:0 14px;}
   .topbar-stats{display:none;}
@@ -757,14 +758,11 @@ tr:hover td{background:#fafcf9;}
   <button class="ni" data-p="animals" onclick="SP(this,'animals')">
     <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Animals</span>
   </button>
-  <button class="ni" data-p="lots" onclick="SP(this,'lots')">
-    <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg><span>Lots</span>
-  </button>
   <button class="ni" data-p="health" onclick="SP(this,'health')">
     <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>Health</span>
   </button>
-  <button class="ni" data-p="feed" onclick="SP(this,'feed')">
-    <svg viewBox="0 0 24 24"><path d="M3 3h18v4H3z"/><path d="M3 10h18v4H3z"/><path d="M3 17h18v4H3z"/></svg><span>Feed</span>
+  <button class="ni" data-p="mortality" onclick="SP(this,'mortality')">
+    <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 2 7h10c0-2 2-4 2-7a7 7 0 0 0-7-7z"/><line x1="9" y1="22" x2="15" y2="22"/><line x1="10" y1="19" x2="14" y2="19"/></svg><span>Mortality</span>
   </button>
   <button class="ni" data-p="inv" onclick="SP(this,'inv')">
     <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg><span>Inventory</span>
