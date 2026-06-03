@@ -3294,10 +3294,20 @@ function applyRoleUI(){
   if(!CURRENT_USER) return;
   var role = CURRENT_USER.role||'attendant';
   var perms = ROLE_PERMS[role]||ROLE_PERMS.attendant;
-  // Show/hide nav items
-  document.querySelectorAll('.ni[data-p]').forEach(function(btn){
+  // Show/hide sidebar nav items based on role
+  document.querySelectorAll('.sidebar .ni[data-p]').forEach(function(btn){
     var pane = btn.getAttribute('data-p');
     btn.style.display = perms[pane] ? '' : 'none';
+  });
+  // Mobile nav: show all items the role has permission for
+  // Items without permission get a dimmed style rather than hidden
+  // so the nav never looks broken or has gaps
+  document.querySelectorAll('.bottom-nav .ni[data-p]').forEach(function(btn){
+    var pane = btn.getAttribute('data-p');
+    var hasAccess = perms[pane] ? true : false;
+    btn.style.display = '';
+    btn.style.opacity = hasAccess ? '' : '0.3';
+    btn.style.pointerEvents = hasAccess ? '' : 'none';
   });
   // Update topbar
   var sub = document.getElementById('tb-sub');
@@ -3349,8 +3359,10 @@ async function doLogout(){
   localStorage.removeItem('ffm_refresh');
   localStorage.removeItem('ffm_user');
   CURRENT_USER=null; SUPA_KEY_AUTH=null;
-  // Reset nav
-  document.querySelectorAll('.ni[data-p]').forEach(function(b){b.style.display='';});
+  // Reset nav — show all items, clear any role-based dimming
+  document.querySelectorAll('.ni[data-p]').forEach(function(b){
+    b.style.display='';b.style.opacity='';b.style.pointerEvents='';
+  });
   showLoginScreen();
 }
 
