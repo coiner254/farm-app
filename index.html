@@ -219,6 +219,15 @@ tr:hover td{background:#fafcf9;}
 .subtab.on{color:var(--pri);font-weight:600;border-bottom-color:var(--pri);}
 .subpane{display:none;}.subpane.on{display:block;}
 
+/* ── MOBILE NAV SCROLL HINT ─────────────────────────────── */
+.nav-hint{display:none;}
+@media(max-width:768px){
+  .nav-hint{display:flex;justify-content:center;gap:3px;padding:3px 0 calc(2px + env(safe-area-inset-bottom));background:var(--surf);position:fixed;bottom:calc(52px + env(safe-area-inset-bottom));left:0;right:0;z-index:99;}
+  .nav-hint-dot{width:3px;height:3px;border-radius:50%;background:var(--bdr);}
+  .nav-hint-arrow{font-size:9px;color:var(--light);animation:blink 1.5s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:.4}50%{opacity:1}}
+}
+
 /* ── PRINT ───────────────────────────────────────────────── */
 @media print{
   .sidebar,.topbar,.btn,.brow,.cat-tabs,.mclose,.no-print,#sync-banner{display:none!important;}
@@ -256,12 +265,15 @@ tr:hover td{background:#fafcf9;}
   :root{--sidebar-w:0px;--topbar-h:56px;}
   .sidebar{transform:translateX(-230px);transition:transform .25s;width:230px;}
   .sidebar.open{transform:translateX(0);}
-  .content{margin-left:0;padding:14px 14px 80px;}
-  .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--surf);border-top:1px solid var(--bdr);z-index:100;padding-bottom:env(safe-area-inset-bottom);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .content{margin-left:0;padding:14px 14px 85px;}
+  .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--surf);border-top:1.5px solid var(--bdr);z-index:100;padding-bottom:env(safe-area-inset-bottom);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x mandatory;}
   .bottom-nav::-webkit-scrollbar{display:none;}
-  .ni{flex-direction:column;padding:7px 12px 5px;font-size:9px;flex-shrink:0;min-width:56px;}
-  .ni span{font-size:9px;margin-top:2px;white-space:nowrap;}
+  .ni{flex-direction:column;padding:8px 10px 5px;font-size:9px;flex-shrink:0;min-width:60px;scroll-snap-align:start;}
+  .ni svg{width:19px;height:19px;}
+  .ni span{font-size:9px;margin-top:3px;white-space:nowrap;font-weight:500;}
+  .ni.on{color:var(--pri);}
   .ni.on::before{display:none;}
+  .ni.on span{font-weight:700;}
   .topbar{padding:0 14px;}
   .topbar-stats{display:none;}
   .topbar-divider{display:none;}
@@ -841,30 +853,46 @@ tr:hover td{background:#fafcf9;}
 </div><!-- /content -->
 
 <!-- BOTTOM NAV -->
-<nav class="bottom-nav">
+<nav class="bottom-nav" id="bottom-nav">
   <button class="ni on" data-p="dash" onclick="SP(this,'dash')">
-    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span>
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>Dashboard</span>
   </button>
   <button class="ni" data-p="animals" onclick="SP(this,'animals')">
-    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Animals</span>
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Animals</span>
+  </button>
+  <button class="ni" data-p="lots" onclick="SP(this,'lots')">
+    <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+    <span>Lots</span>
   </button>
   <button class="ni" data-p="health" onclick="SP(this,'health')">
-    <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>Health</span>
+    <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    <span>Health</span>
+  </button>
+  <button class="ni" data-p="feed" onclick="SP(this,'feed')">
+    <svg viewBox="0 0 24 24"><path d="M3 3h18v4H3z"/><path d="M3 10h18v4H3z"/><path d="M3 17h18v4H3z"/></svg>
+    <span>Feed</span>
   </button>
   <button class="ni" data-p="mortality" onclick="SP(this,'mortality')">
-    <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 2 7h10c0-2 2-4 2-7a7 7 0 0 0-7-7z"/><line x1="9" y1="22" x2="15" y2="22"/><line x1="10" y1="19" x2="14" y2="19"/></svg><span>Mortality</span>
-  </button>
-  <button class="ni" data-p="analytics" onclick="SP(this,'analytics')">
-    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Analytics</span>
+    <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 2 7h10c0-2 2-4 2-7a7 7 0 0 0-7-7z"/><line x1="9" y1="22" x2="15" y2="22"/><line x1="10" y1="19" x2="14" y2="19"/></svg>
+    <span>Mortality</span>
   </button>
   <button class="ni" data-p="inv" onclick="SP(this,'inv')">
-    <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg><span>Inventory</span>
+    <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+    <span>Inventory</span>
+  </button>
+  <button class="ni" data-p="analytics" onclick="SP(this,'analytics')">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>Analytics</span>
   </button>
   <button class="ni" data-p="rep" onclick="SP(this,'rep')">
-    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg><span>Reports</span>
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <span>Reports</span>
   </button>
   <button class="ni" data-p="more" onclick="SP(this,'more')">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg><span>More</span>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>Settings</span>
   </button>
 </nav>
 
@@ -1017,6 +1045,15 @@ tr:hover td{background:#fafcf9;}
   </div>
 </div>
 
+<div class="nav-hint" aria-hidden="true">
+  <span class="nav-hint-dot"></span>
+  <span class="nav-hint-dot"></span>
+  <span class="nav-hint-dot"></span>
+  <span class="nav-hint-arrow">&#x276F; scroll</span>
+  <span class="nav-hint-dot"></span>
+  <span class="nav-hint-dot"></span>
+  <span class="nav-hint-dot"></span>
+</div>
 </div><!-- /app -->
 <script>
 'use strict';
@@ -3841,6 +3878,11 @@ function SP(btn,id){
   // Close mobile sidebar after navigation
   var sb=document.getElementById('sidebar');
   if(sb&&window.innerWidth<=768) sb.classList.remove('open');
+  // Scroll active nav item into view on mobile
+  if(window.innerWidth<=768){
+    var activeBtn=document.querySelector('.bottom-nav .ni.on');
+    if(activeBtn) activeBtn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  }
   if(id==='dash')RD();
   else if(id==='animals')RA();
   else if(id==='lots')RL();
